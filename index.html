@@ -35,6 +35,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .toggle-eye:hover{color:var(--teal);}
 .btn-login{width:100%;padding:11px;background:var(--teal);color:white;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:500;cursor:pointer;margin-top:0.5rem;transition:background 0.2s;}
 .btn-login:hover{background:var(--teal-mid);}
+.btn-login:disabled{background:#aaa;cursor:not-allowed;}
 .login-error{background:var(--danger-light);color:var(--danger);border:1px solid #f5c6c2;border-radius:var(--radius);padding:9px 14px;font-size:0.85rem;margin-bottom:1rem;display:none;}
 .login-foot{text-align:center;margin-top:1.2rem;font-size:0.72rem;color:var(--muted);}
 
@@ -95,8 +96,10 @@ input.nilai-input:focus{border-color:var(--teal-mid);box-shadow:0 0 0 3px rgba(1
 .save-status{font-size:0.8rem;color:var(--muted);}
 .save-status.saved{color:var(--success);}
 .save-status.unsaved{color:var(--orange);}
+.save-status.saving{color:var(--teal);}
 .btn-save{padding:9px 24px;background:var(--teal);color:white;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;transition:background 0.2s;}
 .btn-save:hover{background:var(--teal-mid);}
+.btn-save:disabled{background:#aaa;cursor:not-allowed;}
 
 /* ADMIN */
 .admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:1.5rem;}
@@ -114,12 +117,28 @@ input.nilai-input:focus{border-color:var(--teal-mid);box-shadow:0 0 0 3px rgba(1
 .progress-bar-wrap{background:var(--border);border-radius:99px;height:4px;margin-top:8px;overflow:hidden;}
 .progress-bar-fill{height:100%;border-radius:99px;background:var(--teal);transition:width 0.4s;}
 .hidden{display:none!important;}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e28;color:white;padding:10px 20px;border-radius:99px;font-size:0.82rem;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.toast.show{opacity:1;}
+
+/* LOADING OVERLAY */
+#db-loading{position:fixed;inset:0;background:var(--teal-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;}
+#db-loading p{color:rgba(255,255,255,0.8);font-size:0.9rem;}
+.spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.2);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 
+<!-- LOADING -->
+<div id="db-loading">
+  <div class="spinner"></div>
+  <p>Menghubungkan ke database...</p>
+</div>
+
 <!-- LOGIN -->
-<div id="login-screen">
+<div id="login-screen" style="display:none">
   <div class="login-box">
     <div class="login-logo">
       <div class="school-icon">
@@ -160,24 +179,43 @@ input.nilai-input:focus{border-color:var(--teal-mid);box-shadow:0 0 0 3px rgba(1
   <div class="main" id="main-content"></div>
   <div class="bottom-bar hidden" id="bottom-bar">
     <span class="save-status" id="save-status">Belum ada perubahan</span>
-    <button class="btn-save" onclick="saveData()">Simpan Nilai</button>
+    <button class="btn-save" id="btn-save" onclick="saveData()">Simpan Nilai</button>
   </div>
 </div>
 
-<script>
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ── FIREBASE CONFIG ────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyDKbJce87AslIQUChDO-XFSU-BiH1feghI",
+  authDomain: "rekap-nilai-smppgri13.firebaseapp.com",
+  projectId: "rekap-nilai-smppgri13",
+  storageBucket: "rekap-nilai-smppgri13.firebasestorage.app",
+  messagingSenderId: "1000644347379",
+  appId: "1:1000644347379:web:5cab7fa972a16165387e86"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 // ── DATA ──────────────────────────────────
 var ACCOUNTS = {
-  "admin":    { nama:"Administrator",             role:"admin", mapel:[], pass:"admin123456" },
-  "revikk":   { nama:"Revi Khoeril K., S.Pd.",    role:"guru",  mapel:["PAI"], pass:"revikk123" },
-  "eriyanti": { nama:"Noviya Eriyanti S. M., S.H.",role:"guru",  mapel:["PKN","Prakarya"], pass:"eriyanti123" },
-  "omah":     { nama:"Hj. W. Erwina, BA.",         role:"guru",  mapel:["MTK"], pass:"omah123" },
-  "budodo":   { nama:"Siti Roudotul Zannah, S.Pd.",role:"guru",  mapel:["IPA"], pass:"budodo123" },
-  "buyani":   { nama:"Sri Yani K., S.E.",           role:"guru",  mapel:["IPS","Bahasa Sunda"], pass:"buyani321" },
-  "ermanj":   { nama:"Erman Juniarto, S.S.",        role:"guru",  mapel:["Bahasa Inggris"], pass:"ermanj123" },
-  "paklutfi": { nama:"Lutfi Abdullah M., S.Pd.",    role:"guru",  mapel:["SBD"], pass:"paklutfi456" },
-  "ansa":     { nama:"Qisti A.R.",                  role:"guru",  mapel:["PJOK"], pass:"ansa321" },
-  "setiawan": { nama:"Rohman Setiawan, A.Md.Kom",   role:"guru",  mapel:["PLH"], pass:"setiawan123" },
-  "nurulk":   { nama:"Nurul Kustia R., S.Pd.",      role:"guru",  mapel:["Bahasa Indonesia"], pass:"nurulk123" }
+  "admin":    { nama:"Administrator",              role:"admin", mapel:[], pass:"admin123456" },
+  "revikk":   { nama:"Revi Khoeril K., S.Pd.",     role:"guru",  mapel:["PAI"], pass:"revikk123" },
+  "eriyanti": { nama:"Noviya Eriyanti S. M., S.H.", role:"guru",  mapel:["PKN","Prakarya"], pass:"eriyanti123" },
+  "omah":     { nama:"Hj. W. Erwina, BA.",          role:"guru",  mapel:["MTK"], pass:"omah123" },
+  "budodo":   { nama:"Siti Roudotul Zannah, S.Pd.", role:"guru",  mapel:["IPA"], pass:"budodo123" },
+  "buyani":   { nama:"Sri Yani K., S.E.",            role:"guru",  mapel:["IPS","Bahasa Sunda"], pass:"buyani321" },
+  "ermanj":   { nama:"Erman Juniarto, S.S.",         role:"guru",  mapel:["Bahasa Inggris"], pass:"ermanj123" },
+  "paklutfi": { nama:"Lutfi Abdullah M., S.Pd.",     role:"guru",  mapel:["SBD"], pass:"paklutfi456" },
+  "ansa":     { nama:"Qisti A.R.",                   role:"guru",  mapel:["PJOK"], pass:"ansa321" },
+  "setiawan": { nama:"Rohman Setiawan, A.Md.Kom",    role:"guru",  mapel:["PLH"], pass:"setiawan123" },
+  "nurulk":   { nama:"Nurul Kustia R., S.Pd.",       role:"guru",  mapel:["Bahasa Indonesia"], pass:"nurulk123" }
 };
 
 var MAPEL_LIST = ["PAI","PKN","Bahasa Indonesia","MTK","IPA","IPS","Bahasa Inggris","SBD","PJOK","Prakarya","Bahasa Sunda","PLH"];
@@ -207,29 +245,48 @@ var currentUser = null;
 var currentKelas = "9A";
 var currentMapel = null;
 var unsaved = false;
+var nilaiCache = {}; // cache: "kelas_mapel" -> data
 
-// ── STORAGE ───────────────────────────────
-function sKey(kelas, mapel) { return "nilai_" + kelas + "_" + mapel; }
-function loadNilai(kelas, mapel) {
-  try { return JSON.parse(localStorage.getItem(sKey(kelas, mapel)) || "{}"); }
-  catch(e) { return {}; }
+// ── FIREBASE HELPERS ──────────────────────
+function docId(kelas, mapel) {
+  return kelas + "_" + mapel.replace(/\s+/g, "_");
 }
-function saveNilai(kelas, mapel, data) {
-  localStorage.setItem(sKey(kelas, mapel), JSON.stringify(data));
+
+async function loadNilai(kelas, mapel) {
+  var key = docId(kelas, mapel);
+  if (nilaiCache[key] !== undefined) return nilaiCache[key];
+  try {
+    var snap = await getDoc(doc(db, "nilai", key));
+    var data = snap.exists() ? snap.data() : {};
+    nilaiCache[key] = data;
+    return data;
+  } catch(e) {
+    console.error("loadNilai error", e);
+    return {};
+  }
+}
+
+async function saveNilai(kelas, mapel, data) {
+  var key = docId(kelas, mapel);
+  await setDoc(doc(db, "nilai", key), data);
+  nilaiCache[key] = data;
+}
+
+// ── TOAST ─────────────────────────────────
+function showToast(msg) {
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(function() { t.classList.remove("show"); }, 2500);
 }
 
 // ── PASSWORD TOGGLE ───────────────────────
-function toggleEye() {
+window.toggleEye = function() {
   var inp = document.getElementById("inp-pass");
   var btn = document.getElementById("eye-btn");
-  if (inp.type === "password") {
-    inp.type = "text";
-    btn.innerHTML = "&#128584;";
-  } else {
-    inp.type = "password";
-    btn.innerHTML = "&#128065;";
-  }
-}
+  if (inp.type === "password") { inp.type = "text"; btn.innerHTML = "&#128584;"; }
+  else { inp.type = "password"; btn.innerHTML = "&#128065;"; }
+};
 
 // ── LOGIN ─────────────────────────────────
 function doLogin() {
@@ -237,14 +294,7 @@ function doLogin() {
   var p = document.getElementById("inp-pass").value.trim();
   var errEl = document.getElementById("login-error");
   errEl.style.display = "none";
-  errEl.textContent = "";
-
-  if (!u || !p) {
-    errEl.textContent = "Username dan password wajib diisi.";
-    errEl.style.display = "block";
-    return;
-  }
-
+  if (!u || !p) { errEl.textContent = "Username dan password wajib diisi."; errEl.style.display = "block"; return; }
   var acc = ACCOUNTS[u];
   if (acc && acc.pass === p) {
     currentUser = { username: u, nama: acc.nama, role: acc.role, mapel: acc.mapel.slice() };
@@ -266,9 +316,9 @@ function doLogin() {
   }
 }
 
-function doLogout() {
+window.doLogout = function() {
   if (unsaved && !confirm("Ada nilai belum disimpan. Tetap keluar?")) return;
-  currentUser = null; currentMapel = null; unsaved = false;
+  currentUser = null; currentMapel = null; unsaved = false; nilaiCache = {};
   document.getElementById("login-screen").style.display = "flex";
   document.getElementById("app").style.display = "none";
   document.getElementById("inp-user").value = "";
@@ -276,20 +326,13 @@ function doLogout() {
   document.getElementById("inp-pass").type = "password";
   document.getElementById("eye-btn").innerHTML = "&#128065;";
   document.getElementById("login-error").style.display = "none";
-}
-
-document.addEventListener("DOMContentLoaded", function() {
-  document.getElementById("btn-masuk").addEventListener("click", doLogin);
-  document.getElementById("inp-pass").addEventListener("keydown", function(e) { if (e.key === "Enter") doLogin(); });
-  document.getElementById("inp-user").addEventListener("keydown", function(e) { if (e.key === "Enter") document.getElementById("inp-pass").focus(); });
-});
+};
 
 // ── CALC ──────────────────────────────────
 function hitungNA(nh1, nh2, asts, asat) {
   var vals = [nh1, nh2, asts, asat].map(function(v) { return parseFloat(v) || 0; });
-  return Math.round((vals[0] + vals[1] + vals[2] + vals[3]) / 4 * 100) / 100;
+  return Math.round((vals[0]+vals[1]+vals[2]+vals[3])/4*100)/100;
 }
-
 function predikat(na) {
   if (na >= 90) return { text:"A — Sangat Baik", cls:"pred-a" };
   if (na >= 80) return { text:"B — Baik",        cls:"pred-b" };
@@ -297,23 +340,23 @@ function predikat(na) {
   if (na >= 60) return { text:"D — Kurang",      cls:"pred-d" };
   return             { text:"E — Sangat Kurang", cls:"pred-e" };
 }
-
 function getRanks(data, siswaList) {
   var arr = siswaList.map(function(nama) {
     var d = data[nama] || {};
-    var has = d.nh1 || d.nh2 || d.asts || d.asat;
-    return { nama: nama, na: has ? hitungNA(d.nh1, d.nh2, d.asts, d.asat) : null };
+    var has = d.nh1||d.nh2||d.asts||d.asat;
+    return { nama: nama, na: has ? hitungNA(d.nh1,d.nh2,d.asts,d.asat) : null };
   }).filter(function(x) { return x.na !== null; });
-  arr.sort(function(a, b) { return b.na - a.na; });
+  arr.sort(function(a,b) { return b.na - a.na; });
   var ranks = {};
-  arr.forEach(function(x, i) { ranks[x.nama] = i + 1; });
+  arr.forEach(function(x,i) { ranks[x.nama] = i+1; });
   return ranks;
 }
 
 // ── GURU VIEW ─────────────────────────────
-function renderGuru() {
+async function renderGuru() {
+  document.getElementById("main-content").innerHTML = '<p style="padding:2rem;color:var(--muted);text-align:center">Memuat data...</p>';
   var siswa = SISWA[currentKelas];
-  var data = loadNilai(currentKelas, currentMapel);
+  var data = await loadNilai(currentKelas, currentMapel);
   var ranks = getRanks(data, siswa);
   unsaved = false;
   setStatus("Semua tersimpan", "saved");
@@ -321,79 +364,76 @@ function renderGuru() {
   var mapelTabs = currentUser.mapel.length > 1
     ? '<span class="ctrl-label" style="margin-left:8px">Mapel:</span>' +
       currentUser.mapel.map(function(m) {
-        return '<button class="tab-btn' + (m === currentMapel ? " active" : "") + '" onclick="switchMapel(\'' + m + '\')">' + m + '</button>';
-      }).join("")
-    : "";
+        return '<button class="tab-btn'+(m===currentMapel?" active":"")+'" onclick="switchMapel(\''+m+'\')">'+m+'</button>';
+      }).join("") : "";
 
-  var html = '<div class="page-header"><h2>' + currentMapel + '</h2><p>' + currentUser.nama + ' — Kelas ' + currentKelas + '</p></div>' +
-    '<div class="controls"><span class="ctrl-label">Kelas:</span>' +
-    '<button class="tab-btn' + (currentKelas==="9A"?" active":"") + '" onclick="switchKelas(\'9A\')">Kelas 9A</button>' +
-    '<button class="tab-btn' + (currentKelas==="9B"?" active":"") + '" onclick="switchKelas(\'9B\')">Kelas 9B</button>' +
-    mapelTabs + '</div>' +
-    '<div class="table-wrap"><table><thead><tr>' +
-    '<th style="min-width:190px">Nama Siswa</th><th>No.</th><th>NH 1</th><th>NH 2</th><th>ASTS</th><th>ASAT</th><th>Nilai Akhir</th><th>Predikat</th><th>Ranking</th>' +
+  var html = '<div class="page-header"><h2>'+currentMapel+'</h2><p>'+currentUser.nama+' — Kelas '+currentKelas+'</p></div>'+
+    '<div class="controls"><span class="ctrl-label">Kelas:</span>'+
+    '<button class="tab-btn'+(currentKelas==="9A"?" active":"")+'" onclick="switchKelas(\'9A\')">Kelas 9A</button>'+
+    '<button class="tab-btn'+(currentKelas==="9B"?" active":"")+'" onclick="switchKelas(\'9B\')">Kelas 9B</button>'+
+    mapelTabs+'</div>'+
+    '<div class="table-wrap"><table><thead><tr>'+
+    '<th style="min-width:190px">Nama Siswa</th><th>No.</th><th>NH 1</th><th>NH 2</th><th>ASTS</th><th>ASAT</th><th>Nilai Akhir</th><th>Predikat</th><th>Ranking</th>'+
     '</tr></thead><tbody id="nilai-tbody">';
 
   siswa.forEach(function(nama, idx) {
     var d = data[nama] || {};
-    var has = d.nh1 || d.nh2 || d.asts || d.asat;
-    var na = has ? hitungNA(d.nh1, d.nh2, d.asts, d.asat) : null;
+    var has = d.nh1||d.nh2||d.asts||d.asat;
+    var na = has ? hitungNA(d.nh1,d.nh2,d.asts,d.asat) : null;
     var pred = na !== null ? predikat(na) : null;
     var rank = ranks[nama];
     var rCls = rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"rank-other";
-    html += '<tr>' +
-      '<td>' + nama + '</td>' +
-      '<td>' + String(idx+1).padStart(2,"0") + '</td>' +
-      '<td><input class="nilai-input" type="number" min="0" max="100" value="' + (d.nh1||"") + '" data-nama="' + idx + '" data-k="nh1" oninput="onInput(this)"></td>' +
-      '<td><input class="nilai-input" type="number" min="0" max="100" value="' + (d.nh2||"") + '" data-nama="' + idx + '" data-k="nh2" oninput="onInput(this)"></td>' +
-      '<td><input class="nilai-input" type="number" min="0" max="100" value="' + (d.asts||"") + '" data-nama="' + idx + '" data-k="asts" oninput="onInput(this)"></td>' +
-      '<td><input class="nilai-input" type="number" min="0" max="100" value="' + (d.asat||"") + '" data-nama="' + idx + '" data-k="asat" oninput="onInput(this)"></td>' +
-      '<td><span class="nilai-akhir" id="na-' + idx + '">' + (na!==null?na.toFixed(2):"—") + '</span></td>' +
-      '<td><span class="predikat-badge ' + (pred?pred.cls:"") + '" id="pred-' + idx + '">' + (pred?pred.text:"—") + '</span></td>' +
-      '<td><span class="ranking-badge ' + (rank?rCls:"") + '" id="rank-' + idx + '">' + (rank||"—") + '</span></td>' +
+    html += '<tr>'+
+      '<td>'+nama+'</td>'+
+      '<td>'+String(idx+1).padStart(2,"0")+'</td>'+
+      '<td><input class="nilai-input" type="number" min="0" max="100" value="'+(d.nh1||"")+'" data-idx="'+idx+'" data-k="nh1" oninput="onInput(this)"></td>'+
+      '<td><input class="nilai-input" type="number" min="0" max="100" value="'+(d.nh2||"")+'" data-idx="'+idx+'" data-k="nh2" oninput="onInput(this)"></td>'+
+      '<td><input class="nilai-input" type="number" min="0" max="100" value="'+(d.asts||"")+'" data-idx="'+idx+'" data-k="asts" oninput="onInput(this)"></td>'+
+      '<td><input class="nilai-input" type="number" min="0" max="100" value="'+(d.asat||"")+'" data-idx="'+idx+'" data-k="asat" oninput="onInput(this)"></td>'+
+      '<td><span class="nilai-akhir" id="na-'+idx+'">'+(na!==null?na.toFixed(2):"—")+'</span></td>'+
+      '<td><span class="predikat-badge '+(pred?pred.cls:"")+'" id="pred-'+idx+'">'+(pred?pred.text:"—")+'</span></td>'+
+      '<td><span class="ranking-badge '+(rank?rCls:"")+'" id="rank-'+idx+'">'+(rank||"—")+'</span></td>'+
       '</tr>';
   });
-
   html += '</tbody></table></div>';
   document.getElementById("main-content").innerHTML = html;
 }
 
-function onInput(inp) {
+window.onInput = function(inp) {
   var v = parseFloat(inp.value);
   if (!isNaN(v)) { if(v<0) inp.value=0; if(v>100) inp.value=100; }
   unsaved = true;
   setStatus("Ada perubahan belum disimpan", "unsaved");
   var row = inp.closest("tr");
-  var idx = parseInt(inp.dataset.nama);
+  var idx = parseInt(inp.dataset.idx);
   var inputs = row.querySelectorAll(".nilai-input");
   var vals = Array.from(inputs).map(function(i) { return i.value; });
   var hasAny = vals.some(function(v) { return v.trim() !== ""; });
-  var naEl = document.getElementById("na-" + idx);
-  var predEl = document.getElementById("pred-" + idx);
+  var naEl = document.getElementById("na-"+idx);
+  var predEl = document.getElementById("pred-"+idx);
   if (!hasAny) { naEl.textContent="—"; predEl.className="predikat-badge"; predEl.textContent="—"; return; }
-  var na = hitungNA(vals[0], vals[1], vals[2], vals[3]);
+  var na = hitungNA(vals[0],vals[1],vals[2],vals[3]);
   var pred = predikat(na);
   naEl.textContent = na.toFixed(2);
-  predEl.className = "predikat-badge " + pred.cls;
+  predEl.className = "predikat-badge "+pred.cls;
   predEl.textContent = pred.text;
-  // recalc rankings
-  var data = getTableData();
-  var ranks = getRanks(data, SISWA[currentKelas]);
+  var tableData = getTableData();
+  var ranks = getRanks(tableData, SISWA[currentKelas]);
   SISWA[currentKelas].forEach(function(nama, i) {
-    var rEl = document.getElementById("rank-" + i);
+    var rEl = document.getElementById("rank-"+i);
     if (!rEl) return;
     var rank = ranks[nama];
     var rCls = rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"rank-other";
-    rEl.className = "ranking-badge " + (rank?rCls:"");
+    rEl.className = "ranking-badge "+(rank?rCls:"");
     rEl.textContent = rank||"—";
   });
-}
+};
 
 function getTableData() {
   var data = {};
   var siswa = SISWA[currentKelas];
   document.querySelectorAll(".nilai-input").forEach(function(inp) {
-    var idx = parseInt(inp.dataset.nama);
+    var idx = parseInt(inp.dataset.idx);
     var nama = siswa[idx];
     if (!data[nama]) data[nama] = {};
     var v = parseFloat(inp.value);
@@ -402,103 +442,127 @@ function getTableData() {
   return data;
 }
 
-function saveData() {
-  var data = getTableData();
-  saveNilai(currentKelas, currentMapel, data);
-  unsaved = false;
-  setStatus("Tersimpan ✓", "saved");
-}
+window.saveData = async function() {
+  var btn = document.getElementById("btn-save");
+  btn.disabled = true;
+  setStatus("Menyimpan...", "saving");
+  try {
+    var data = getTableData();
+    await saveNilai(currentKelas, currentMapel, data);
+    unsaved = false;
+    setStatus("Tersimpan ✓", "saved");
+    showToast("Nilai berhasil disimpan ke database ✓");
+  } catch(e) {
+    setStatus("Gagal menyimpan!", "unsaved");
+    showToast("Gagal simpan. Cek koneksi internet.");
+  }
+  btn.disabled = false;
+};
 
 function setStatus(msg, cls) {
   var el = document.getElementById("save-status");
+  if (!el) return;
   el.textContent = msg;
-  el.className = "save-status " + cls;
+  el.className = "save-status "+cls;
 }
 
-function switchKelas(k) { if(unsaved) saveData(); currentKelas=k; renderGuru(); }
-function switchMapel(m) { if(unsaved) saveData(); currentMapel=m; renderGuru(); }
+window.switchKelas = function(k) { if(unsaved) { if(!confirm("Simpan perubahan dulu?")) return; saveData(); } currentKelas=k; renderGuru(); };
+window.switchMapel = function(m) { if(unsaved) { if(!confirm("Simpan perubahan dulu?")) return; saveData(); } currentMapel=m; renderGuru(); };
 
 // ── ADMIN VIEW ────────────────────────────
-function renderAdmin() {
+async function renderAdmin() {
+  document.getElementById("main-content").innerHTML = '<p style="padding:2rem;color:var(--muted);text-align:center">Memuat data dari database...</p>';
+
+  // Load semua data untuk stats
   var total = SISWA["9A"].length + SISWA["9B"].length;
   var totalMapel = MAPEL_LIST.length;
   var totalEntri = 0;
-  MAPEL_LIST.forEach(function(m) {
-    ["9A","9B"].forEach(function(k) {
-      var d = loadNilai(k, m);
+  var allData = {};
+
+  for (var ki = 0; ki < ["9A","9B"].length; ki++) {
+    var k = ["9A","9B"][ki];
+    allData[k] = {};
+    for (var mi = 0; mi < MAPEL_LIST.length; mi++) {
+      var m = MAPEL_LIST[mi];
+      var d = await loadNilai(k, m);
+      allData[k][m] = d;
       Object.keys(d).forEach(function(nama) {
         var v = d[nama]; if(v.nh1||v.nh2||v.asts||v.asat) totalEntri++;
       });
-    });
-  });
-  var pct = total*totalMapel > 0 ? Math.round(totalEntri/(total*totalMapel)*100) : 0;
+    }
+  }
 
+  var pct = total*totalMapel > 0 ? Math.round(totalEntri/(total*totalMapel)*100) : 0;
   if (!currentMapel) currentMapel = MAPEL_LIST[0];
   var siswaKelas = SISWA[currentKelas];
-  var dataDetail = loadNilai(currentKelas, currentMapel);
+  var dataDetail = allData[currentKelas][currentMapel] || {};
   var ranks = getRanks(dataDetail, siswaKelas);
 
-  var html = '<div class="page-header"><h2>Dashboard Administrator</h2><p>SMP PGRI 13 Bogor — Semester Genap 2025/2026</p></div>' +
-    '<div class="admin-grid">' +
-    '<div class="stat-card"><div class="stat-val">' + total + '</div><div class="stat-label">Total siswa (9A + 9B)</div></div>' +
-    '<div class="stat-card"><div class="stat-val">' + totalMapel + '</div><div class="stat-label">Mata pelajaran</div></div>' +
-    '<div class="stat-card"><div class="stat-val">' + totalEntri + '</div><div class="stat-label">Data nilai terinput</div></div>' +
-    '<div class="stat-card"><div class="stat-val">' + pct + '%</div><div class="stat-label">Kelengkapan keseluruhan</div></div>' +
-    '</div>' +
-    '<div class="controls" style="margin-bottom:1rem"><span class="ctrl-label">Kelas:</span>' +
-    '<button class="tab-btn' + (currentKelas==="9A"?" active":"") + '" onclick="adminKelas(\'9A\')">Kelas 9A</button>' +
-    '<button class="tab-btn' + (currentKelas==="9B"?" active":"") + '" onclick="adminKelas(\'9B\')">Kelas 9B</button>' +
-    '<button class="export-btn" onclick="exportXLSX()">Export XLSX ↓</button></div>' +
-    '<div class="section-label">Progres Input per Mata Pelajaran — Kelas ' + currentKelas + '</div>' +
+  var html = '<div class="page-header"><h2>Dashboard Administrator</h2><p>SMP PGRI 13 Bogor — Semester Genap 2025/2026 &nbsp;•&nbsp; Data real-time dari database</p></div>'+
+    '<div class="admin-grid">'+
+    '<div class="stat-card"><div class="stat-val">'+total+'</div><div class="stat-label">Total siswa (9A + 9B)</div></div>'+
+    '<div class="stat-card"><div class="stat-val">'+totalMapel+'</div><div class="stat-label">Mata pelajaran</div></div>'+
+    '<div class="stat-card"><div class="stat-val">'+totalEntri+'</div><div class="stat-label">Data nilai terinput</div></div>'+
+    '<div class="stat-card"><div class="stat-val">'+pct+'%</div><div class="stat-label">Kelengkapan keseluruhan</div></div>'+
+    '</div>'+
+    '<div class="controls" style="margin-bottom:1rem"><span class="ctrl-label">Kelas:</span>'+
+    '<button class="tab-btn'+(currentKelas==="9A"?" active":"")+'" onclick="adminKelas(\'9A\')">Kelas 9A</button>'+
+    '<button class="tab-btn'+(currentKelas==="9B"?" active":"")+'" onclick="adminKelas(\'9B\')">Kelas 9B</button>'+
+    '<button class="export-btn" onclick="exportXLSX()">Export XLSX ↓</button>'+
+    '<button class="tab-btn" onclick="renderAdmin()" style="margin-left:8px">🔄 Refresh</button></div>'+
+    '<div class="section-label">Progres Input per Mata Pelajaran — Kelas '+currentKelas+'</div>'+
     '<div class="mapel-progress-grid">';
 
   MAPEL_LIST.forEach(function(m) {
-    var d = loadNilai(currentKelas, m);
+    var d = allData[currentKelas][m] || {};
     var filled = siswaKelas.filter(function(n) { var v=d[n]||{}; return v.nh1||v.nh2||v.asts||v.asat; }).length;
     var p = Math.round(filled/siswaKelas.length*100);
-    html += '<div class="mapel-prog-card" onclick="adminViewMapel(\'' + m + '\')">' +
-      '<div class="mp-name">' + m + '</div>' +
-      '<div class="mp-guru">' + (MAPEL_GURU[m]||"—") + '</div>' +
-      '<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + p + '%"></div></div>' +
-      '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px">' + filled + '/' + siswaKelas.length + ' siswa — ' + p + '%</div>' +
+    html += '<div class="mapel-prog-card" onclick="adminViewMapel(\''+m+'\')">'+
+      '<div class="mp-name">'+m+'</div>'+
+      '<div class="mp-guru">'+(MAPEL_GURU[m]||"—")+'</div>'+
+      '<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+p+'%"></div></div>'+
+      '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px">'+filled+'/'+siswaKelas.length+' siswa — '+p+'%</div>'+
       '</div>';
   });
 
-  html += '</div><div class="section-label">Detail Nilai — Kelas ' + currentKelas + '</div>' +
-    '<div style="margin-bottom:10px"><select class="mapel-select" onchange="adminViewMapel(this.value)">' +
-    MAPEL_LIST.map(function(m) { return '<option value="' + m + '"' + (m===currentMapel?" selected":"") + '>' + m + '</option>'; }).join("") +
-    '</select></div>' +
-    '<div class="table-wrap"><table><thead><tr>' +
-    '<th style="min-width:190px">Nama Siswa</th><th>No.</th><th>NH 1</th><th>NH 2</th><th>ASTS</th><th>ASAT</th><th>Nilai Akhir</th><th>Predikat</th><th>Ranking</th>' +
+  html += '</div><div class="section-label">Detail Nilai — Kelas '+currentKelas+'</div>'+
+    '<div style="margin-bottom:10px"><select class="mapel-select" onchange="adminViewMapel(this.value)">'+
+    MAPEL_LIST.map(function(m) { return '<option value="'+m+'"'+(m===currentMapel?" selected":"")+'>'+m+'</option>'; }).join("")+
+    '</select></div>'+
+    '<div class="table-wrap"><table><thead><tr>'+
+    '<th style="min-width:190px">Nama Siswa</th><th>No.</th><th>NH 1</th><th>NH 2</th><th>ASTS</th><th>ASAT</th><th>Nilai Akhir</th><th>Predikat</th><th>Ranking</th>'+
     '</tr></thead><tbody>';
 
   siswaKelas.forEach(function(nama, idx) {
     var d = dataDetail[nama] || {};
     var has = d.nh1||d.nh2||d.asts||d.asat;
-    var na = has ? hitungNA(d.nh1, d.nh2, d.asts, d.asat) : null;
+    var na = has ? hitungNA(d.nh1,d.nh2,d.asts,d.asat) : null;
     var pred = na !== null ? predikat(na) : null;
     var rank = ranks[nama];
     var rCls = rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"rank-other";
-    html += '<tr>' +
-      '<td>' + nama + '</td>' +
-      '<td style="font-family:\'DM Mono\',monospace;font-size:0.75rem;color:var(--muted)">' + String(idx+1).padStart(2,"0") + '</td>' +
-      '<td>' + (d.nh1||"—") + '</td><td>' + (d.nh2||"—") + '</td><td>' + (d.asts||"—") + '</td><td>' + (d.asat||"—") + '</td>' +
-      '<td><span class="nilai-akhir">' + (na!==null?na.toFixed(2):"—") + '</span></td>' +
-      '<td><span class="predikat-badge ' + (pred?pred.cls:"") + '">' + (pred?pred.text:"—") + '</span></td>' +
-      '<td><span class="ranking-badge ' + (rank?rCls:"") + '">' + (rank||"—") + '</span></td>' +
+    html += '<tr>'+
+      '<td>'+nama+'</td>'+
+      '<td style="font-family:\'DM Mono\',monospace;font-size:0.75rem;color:var(--muted)">'+String(idx+1).padStart(2,"0")+'</td>'+
+      '<td>'+(d.nh1||"—")+'</td><td>'+(d.nh2||"—")+'</td><td>'+(d.asts||"—")+'</td><td>'+(d.asat||"—")+'</td>'+
+      '<td><span class="nilai-akhir">'+(na!==null?na.toFixed(2):"—")+'</span></td>'+
+      '<td><span class="predikat-badge '+(pred?pred.cls:"")+'">'+(pred?pred.text:"—")+'</span></td>'+
+      '<td><span class="ranking-badge '+(rank?rCls:"")+'">'+(rank||"—")+'</span></td>'+
       '</tr>';
   });
-
   html += '</tbody></table></div>';
   document.getElementById("main-content").innerHTML = html;
+
+  // store allData for export
+  window._allData = allData;
 }
 
-function adminKelas(k) { currentKelas=k; currentMapel=MAPEL_LIST[0]; renderAdmin(); }
-function adminViewMapel(m) { currentMapel=m; renderAdmin(); }
+window.adminKelas = function(k) { currentKelas=k; currentMapel=MAPEL_LIST[0]; renderAdmin(); };
+window.adminViewMapel = function(m) { currentMapel=m; renderAdmin(); };
 
 // ── EXPORT XLSX ───────────────────────────
-function exportXLSX() {
-  if (typeof XLSX === "undefined") { alert("Library XLSX belum siap, coba lagi."); return; }
+window.exportXLSX = function() {
+  if (typeof XLSX === "undefined") { alert("Library XLSX belum siap."); return; }
+  var allData = window._allData || {};
   var wb = XLSX.utils.book_new();
   ["9A","9B"].forEach(function(kelas) {
     var siswa = SISWA[kelas];
@@ -509,31 +573,44 @@ function exportXLSX() {
     siswa.forEach(function(nama, idx) {
       var row = [String(idx+1).padStart(2,"0"), nama];
       MAPEL_LIST.forEach(function(m) {
-        var d = (loadNilai(kelas, m)[nama]) || {};
+        var d = ((allData[kelas]||{})[m]||{})[nama] || {};
         var has = d.nh1||d.nh2||d.asts||d.asat;
         var na = has ? parseFloat(hitungNA(d.nh1,d.nh2,d.asts,d.asat).toFixed(2)) : "";
         var pred = has ? predikat(na).text.split(" — ")[0] : "";
-        row.push(d.nh1!==undefined&&d.nh1!==""?parseFloat(d.nh1):"",
-                 d.nh2!==undefined&&d.nh2!==""?parseFloat(d.nh2):"",
-                 d.asts!==undefined&&d.asts!==""?parseFloat(d.asts):"",
-                 d.asat!==undefined&&d.asat!==""?parseFloat(d.asat):"",
-                 na, pred);
+        row.push(
+          d.nh1!==undefined&&d.nh1!==""?parseFloat(d.nh1):"",
+          d.nh2!==undefined&&d.nh2!==""?parseFloat(d.nh2):"",
+          d.asts!==undefined&&d.asts!==""?parseFloat(d.asts):"",
+          d.asat!==undefined&&d.asat!==""?parseFloat(d.asat):"",
+          na, pred
+        );
       });
       rows.push(row);
     });
     var ws = XLSX.utils.aoa_to_sheet(rows);
     if (!ws["!merges"]) ws["!merges"] = [];
     MAPEL_LIST.forEach(function(m, i) {
-      var c = 2 + i*6;
+      var c = 2+i*6;
       ws["!merges"].push({s:{r:0,c:c},e:{r:0,c:c+5}});
     });
     var wscols = [{wch:10},{wch:28}];
     MAPEL_LIST.forEach(function() { [8,8,8,8,12,16].forEach(function(w){wscols.push({wch:w});}); });
     ws["!cols"] = wscols;
-    XLSX.utils.book_append_sheet(wb, ws, "Kelas " + kelas);
+    XLSX.utils.book_append_sheet(wb, ws, "Kelas "+kelas);
   });
   XLSX.writeFile(wb, "Rekap_Nilai_SMPPGRI13_2025_2026.xlsx");
-}
+};
+
+// ── INIT ──────────────────────────────────
+document.addEventListener("DOMContentLoaded", function() {
+  // Hide loading, show login
+  document.getElementById("db-loading").style.display = "none";
+  document.getElementById("login-screen").style.display = "flex";
+
+  document.getElementById("btn-masuk").addEventListener("click", doLogin);
+  document.getElementById("inp-pass").addEventListener("keydown", function(e) { if(e.key==="Enter") doLogin(); });
+  document.getElementById("inp-user").addEventListener("keydown", function(e) { if(e.key==="Enter") document.getElementById("inp-pass").focus(); });
+});
 </script>
 </body>
 </html>

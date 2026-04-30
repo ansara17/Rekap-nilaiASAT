@@ -492,7 +492,8 @@ async function renderAdmin() {
   // Load semua data untuk stats
   var total = SISWA["9A"].length + SISWA["9B"].length;
   var totalMapel = MAPEL_LIST.length;
-  var totalEntri = 0;
+  var totalFields = 0;   // total field yang harus diisi (siswa x mapel x 4 komponen)
+  var filledFields = 0;  // total field yang sudah terisi
   var allData = {};
 
   for (var ki = 0; ki < ["9A","9B"].length; ki++) {
@@ -502,13 +503,19 @@ async function renderAdmin() {
       var m = MAPEL_LIST[mi];
       var d = await loadNilai(k, m);
       allData[k][m] = d;
-      Object.keys(d).forEach(function(nama) {
-        var v = d[nama]; if(v.nh1||v.nh2||v.asts||v.asat) totalEntri++;
+      SISWA[k].forEach(function(nama) {
+        totalFields += 4;
+        var v = d[nama] || {};
+        if (v.nh1  !== undefined && v.nh1  !== "") filledFields++;
+        if (v.nh2  !== undefined && v.nh2  !== "") filledFields++;
+        if (v.asts !== undefined && v.asts !== "") filledFields++;
+        if (v.asat !== undefined && v.asat !== "") filledFields++;
       });
     }
   }
 
-  var pct = total*totalMapel > 0 ? Math.round(totalEntri/(total*totalMapel)*100) : 0;
+  var totalEntri = filledFields;
+  var pct = totalFields > 0 ? Math.round(filledFields / totalFields * 100) : 0;
   if (!currentMapel) currentMapel = MAPEL_LIST[0];
   var siswaKelas = SISWA[currentKelas];
   var dataDetail = allData[currentKelas][currentMapel] || {};
@@ -544,14 +551,25 @@ async function renderAdmin() {
 
   MAPEL_LIST.forEach(function(m) {
     var d = allData[currentKelas][m] || {};
-    var filled = siswaKelas.filter(function(n) { var v=d[n]||{}; return v.nh1||v.nh2||v.asts||v.asat; }).length;
-    var p = Math.round(filled/siswaKelas.length*100);
+    var totalFields = siswaKelas.length * 4; // NH1, NH2, ASTS, ASAT per siswa
+    var filledFields = 0;
+    var filledNH1 = 0, filledNH2 = 0, filledASTS = 0, filledASAT = 0;
+    siswaKelas.forEach(function(n) {
+      var v = d[n] || {};
+      if (v.nh1  !== undefined && v.nh1  !== "") { filledFields++; filledNH1++; }
+      if (v.nh2  !== undefined && v.nh2  !== "") { filledFields++; filledNH2++; }
+      if (v.asts !== undefined && v.asts !== "") { filledFields++; filledASTS++; }
+      if (v.asat !== undefined && v.asat !== "") { filledFields++; filledASAT++; }
+    });
+    var p = Math.round(filledFields / totalFields * 100);
+    var detail = 'NH1: '+filledNH1+' | NH2: '+filledNH2+' | ASTS: '+filledASTS+' | ASAT: '+filledASAT+' dari '+siswaKelas.length+' siswa';
     html += '<div class="mapel-prog-card" onclick="adminViewMapel(\''+m+'\')">'+
       '<div class="mp-name">'+m+'</div>'+
       '<div class="mp-guru">'+(MAPEL_GURU[m]||"—")+'</div>'+
       '<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+p+'%"></div></div>'+
-      '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px">'+filled+'/'+siswaKelas.length+' siswa — '+p+'%</div>'+
-      '</div>';
+      '<div style="font-size:0.68rem;color:var(--muted);margin-top:4px;line-height:1.6">'+
+      '<b style="color:var(--teal-dark)">'+p+'% lengkap</b><br>'+detail+
+      '</div></div>';
   });
 
   html += '</div><div class="section-label">Detail Nilai — Kelas '+currentKelas+'</div>'+

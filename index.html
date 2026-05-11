@@ -1053,7 +1053,7 @@ window.renderSiswaManagement = async function() {
 };
 
 window.renderSiswaTable = async function() {
-  var search = (document.getElementById("search-siswa")||{}).value||"";
+  var search = (document.getElementById("search-siswa") ? document.getElementById("search-siswa").value : "");
   var searchLower = search.toLowerCase();
   var tbody = document.getElementById("siswa-table-body");
   if (!tbody) return;
@@ -1071,7 +1071,7 @@ window.renderSiswaTable = async function() {
         nisn = DATA_NISN[k][nama];
       }
       
-      if (search && nama.toLowerCase().indexOf(searchLower) === -1 && nisn.indexOf(searchLower) === -1) {
+      if (search && nama.toLowerCase().indexOf(searchLower) === -1 && String(nisn).indexOf(searchLower) === -1) {
         continue;
       }
       
@@ -1102,7 +1102,7 @@ window.renderSiswaTable = async function() {
 };
 
 window.showAddSiswaModal = function() {
-  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)closeModal()">'+
+  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)closeModalSiswa()">'+
     '<div style="background:white;border-radius:12px;padding:1.5rem;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">'+
     '<h3 style="font-family:\'Noto Serif\',serif;font-size:1.1rem;color:var(--teal-dark);margin-bottom:1.25rem">Tambah Siswa Baru</h3>'+
     
@@ -1126,7 +1126,7 @@ window.showAddSiswaModal = function() {
     
     '<div style="display:flex;gap:8px;margin-top:1.5rem">'+
     '<button class="btn-save" style="flex:1" onclick="simpanSiswaBaru()">💾 Simpan</button>'+
-    '<button class="btn-template" style="flex:1" onclick="closeModal()">Batal</button>'+
+    '<button class="btn-template" style="flex:1" onclick="closeModalSiswa()">Batal</button>'+
     '</div>'+
     
     '</div></div>';
@@ -1151,7 +1151,7 @@ window.showEditSiswaModal = function(kelas, nama) {
     nisn = DATA_NISN[kelas][nama];
   }
   
-  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)closeModal()">'+
+  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)closeModalSiswa()">'+
     '<div style="background:white;border-radius:12px;padding:1.5rem;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">'+
     '<h3 style="font-family:\'Noto Serif\',serif;font-size:1.1rem;color:var(--teal-dark);margin-bottom:1.25rem">Edit Data Siswa</h3>'+
     
@@ -1185,7 +1185,7 @@ window.showEditSiswaModal = function(kelas, nama) {
   document.body.insertAdjacentHTML('beforeend', html);
 };
 
-window.closeModal = function() {
+window.closeModalSiswa = function() {
   var modals = document.querySelectorAll('div[style*="position:fixed;inset:0;background:rgba(0,0,0,0.5)"]');
   modals.forEach(function(m) { m.remove(); });
 };

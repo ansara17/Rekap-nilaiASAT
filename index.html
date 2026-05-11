@@ -1068,7 +1068,6 @@ window.renderSiswaManagement = async function() {
     
     '<div style="margin-bottom:1rem;display:flex;gap:10px;flex-wrap:wrap">'+
     '<input type="text" id="search-siswa" placeholder="Cari nama atau NISN..." '+
-    'oninput="renderSiswaTable()" '+
     'style="flex:1;min-width:200px;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:0.9rem;outline:none">'+
     '</div>'+
     
@@ -1080,6 +1079,17 @@ window.renderSiswaManagement = async function() {
     '</tr></thead><tbody id="siswa-table-body"></tbody></table></div>';
   
   document.getElementById("main-content").innerHTML = html;
+  
+  // Tambahkan event listener untuk search input setelah render
+  setTimeout(function() {
+    var searchInput = document.getElementById("search-siswa");
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        window.renderSiswaTable();
+      });
+    }
+  }, 0);
+  
   await renderSiswaTable();
 };
 

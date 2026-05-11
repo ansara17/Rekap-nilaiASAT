@@ -783,6 +783,21 @@ function setStatus(msg, cls) {
 window.switchKelas = function(k) {
   if(unsaved) { if(!confirm("Simpan perubahan dulu?")) return; saveData(); }
   
+  // Validasi: Jika guru, pastikan memiliki akses ke kelas ini
+  if (currentUser.role === "guru") {
+    var myMapel = getMapelGuru(currentUser.username, k);
+    if (myMapel.length === 0) {
+      // Guru tidak memiliki akses ke kelas ini
+      document.getElementById("main-content").innerHTML =
+        '<div style="padding:2rem;text-align:center;color:var(--muted)">'+
+        '<p>Anda tidak memiliki mata pelajaran di kelas '+k+'.</p>'+
+        '<p style="margin-top:8px;font-size:0.85rem">Silakan pilih kelas lain yang sesuai dengan akses Anda.</p>'+
+        '<button onclick="switchKelas(\'\')" style="margin-top:16px;padding:10px 24px;background:var(--teal);color:white;border:none;border-radius:8px;font-family:\'DM Sans\',sans-serif;font-weight:500;cursor:pointer">⬅ Kembali ke Kelas Sebelumnya</button>'+
+        '</div>';
+      return;
+    }
+  }
+  
   // Jika k kosong, kembali ke kelas pertama yang valid untuk guru ini
   if (k === "") {
     var allK = Object.keys(SISWA).sort();

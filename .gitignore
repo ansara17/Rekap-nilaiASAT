@@ -9,18 +9,30 @@ __pycache__/
 *.obj
 dist/
 build/
+target/
+
 # Dependencies
 .venv/
 venv/
 node_modules/
+.julia/
+zig-cache/
+.gradle/
+
 # Logs and temp files
 *.log
 *.tmp
 *.swp
+
 # Environment
 .env
 .env.local
 .env.*
+
 # Editors
 .vscode/
 .idea/
+*.swo
+
+# Original rules preserved
+*.log

@@ -522,12 +522,14 @@ async function renderGuru() {
     currentMapel = myMapel.length > 0 ? myMapel[0] : null;
   }
 
-  // Jika tidak ada mapel, tampilkan pesan
+  // Jika tidak ada mapel, tampilkan pesan dengan tombol kembali
   if (!currentMapel) {
     document.getElementById("main-content").innerHTML =
       '<div style="padding:2rem;text-align:center;color:var(--muted)">'+
       '<p>Anda tidak memiliki mata pelajaran di kelas '+currentKelas+'.</p>'+
-      '<p style="margin-top:8px;font-size:0.85rem">Pilih kelas lain di atas.</p></div>';
+      '<p style="margin-top:8px;font-size:0.85rem">Pilih kelas lain di atas atau klik tombol kembali.</p>'+
+      '<button onclick="switchKelas(\'\')" style="margin-top:16px;padding:10px 24px;background:var(--teal);color:white;border:none;border-radius:8px;font-family:\'DM Sans\',sans-serif;font-weight:500;cursor:pointer">⬅ Kembali ke Kelas Sebelumnya</button>'+
+      '</div>';
     return;
   }
 
@@ -780,7 +782,21 @@ function setStatus(msg, cls) {
 
 window.switchKelas = function(k) {
   if(unsaved) { if(!confirm("Simpan perubahan dulu?")) return; saveData(); }
-  currentKelas = k;
+  
+  // Jika k kosong, kembali ke kelas pertama yang valid untuk guru ini
+  if (k === "") {
+    var allK = Object.keys(SISWA).sort();
+    var u = currentUser.username;
+    for (var ki=0; ki<allK.length; ki++) {
+      if (getMapelGuru(u, allK[ki]).length > 0) { 
+        currentKelas = allK[ki]; 
+        break; 
+      }
+    }
+  } else {
+    currentKelas = k;
+  }
+  
   // Reset mapel sesuai kelas baru (akan di-resolve di renderGuru)
   currentMapel = null;
   renderGuru();
@@ -1178,7 +1194,7 @@ window.showEditSiswaModal = function(kelas, nama) {
     
     '<div style="display:flex;gap:8px;margin-top:1.5rem">'+
     '<button class="btn-save" style="flex:1" onclick="updateSiswa()">💾 Update</button>'+
-    '<button class="btn-template" style="flex:1" onclick="closeModal()">Batal</button>'+
+    '<button class="btn-template" style="flex:1" onclick="closeModalSiswa()">Batal</button>'+
     '</div>'+
     
     '</div></div>';

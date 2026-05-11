@@ -1095,8 +1095,8 @@ window.renderSiswaTable = async function() {
       '<td style="font-weight:500">'+r.nama+'</td>'+
       '<td><span class="predikat-badge pred-b">'+r.kelas+'</span></td>'+
       '<td>'+
-      '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="showEditSiswaModal(\\''+r.kelas+'\\',\\''+r.nama.replace(/'/g,"\\'")+'\\')">✏️ Edit</button>'+
-      '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="confirmHapusSiswa(\\''+r.kelas+'\\',\\''+r.nama.replace(/'/g,"\\'")+'\\')">🗑️ Hapus</button>'+
+      '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="showEditSiswaModal('\\''+r.kelas.replace(/'/g,"\\'")+"','\\''+r.nama.replace(/'/g,"\\'")+"')">✏️ Edit</button>'+
+      '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="confirmHapusSiswa('\\''+r.kelas.replace(/'/g,"\\'")+"','\\''+r.nama.replace(/'/g,"\\'")+"')">🗑️ Hapus</button>'+
       '</td>'+
       '</tr>';
   }).join("");

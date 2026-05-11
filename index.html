@@ -426,9 +426,18 @@ var SETTINGS = {
   pct_nh2:  30,
   pct_asts: 15,
   pct_asat: 25,
-  kkm: 75
+  kkm_kelas7: 75,
+  kkm_kelas8: 75,
+  kkm_kelas9: 75
 };
 var settingsCache = null;
+
+function getKKM(kelas) {
+  if (kelas === "7") return SETTINGS.kkm_kelas7;
+  if (kelas === "8") return SETTINGS.kkm_kelas8;
+  if (kelas === "9") return SETTINGS.kkm_kelas9;
+  return SETTINGS.kkm_kelas9; // default
+}
 
 async function loadSettings() {
   if (settingsCache) return;
@@ -436,11 +445,13 @@ async function loadSettings() {
     var snap = await getDoc(doc(db, "config", "settings"));
     if (snap.exists()) {
       var s = snap.data();
-      SETTINGS.pct_nh1  = s.pct_nh1  ?? 30;
-      SETTINGS.pct_nh2  = s.pct_nh2  ?? 30;
-      SETTINGS.pct_asts = s.pct_asts ?? 15;
-      SETTINGS.pct_asat = s.pct_asat ?? 25;
-      SETTINGS.kkm      = s.kkm      ?? 75;
+      SETTINGS.pct_nh1   = s.pct_nh1   ?? 30;
+      SETTINGS.pct_nh2   = s.pct_nh2   ?? 30;
+      SETTINGS.pct_asts  = s.pct_asts  ?? 15;
+      SETTINGS.pct_asat  = s.pct_asat  ?? 25;
+      SETTINGS.kkm_kelas7 = s.kkm_kelas7 ?? 75;
+      SETTINGS.kkm_kelas8 = s.kkm_kelas8 ?? 75;
+      SETTINGS.kkm_kelas9 = s.kkm_kelas9 ?? 75;
     }
   } catch(e) { console.log("Using default settings"); }
   settingsCache = true;
@@ -469,7 +480,7 @@ function hitungASAJ(tulis, praktek) {
   return Math.round(parseFloat(praktek)*100)/100; // nilai tunggal praktek
 }
 function predikat(na) {
-  var kkm = SETTINGS.kkm;
+  var kkm = getKKM(currentKelas);
   if (na >= 90)        return { text:"A — Sangat Baik", cls:"pred-a" };
   if (na >= 80)        return { text:"B — Baik",        cls:"pred-b" };
   if (na >= 70)        return { text:"C — Cukup",       cls:"pred-c" };
@@ -478,7 +489,7 @@ function predikat(na) {
   return                      { text:"E — Sangat Kurang","cls":"pred-e" };
 }
 function ketBelajar(na) {
-  return na >= SETTINGS.kkm ? "TERLAMPAUI" : "BELUM TERCAPAI";
+  return na >= getKKM(currentKelas) ? "TERLAMPAUI" : "BELUM TERCAPAI";
 }
 function getRanks(data, siswaList) {
   var arr = siswaList.map(function(nama) {
@@ -523,7 +534,7 @@ async function renderGuru() {
   setStatus("Semua tersimpan", "saved");
   document.getElementById("bottom-bar").classList.remove("hidden");
 
-  var pctInfo = 'NH1 '+SETTINGS.pct_nh1+'% + NH2 '+SETTINGS.pct_nh2+'% + ASTS '+SETTINGS.pct_asts+'% + ASAT '+SETTINGS.pct_asat+'% &nbsp;|&nbsp; KKM Rapor: '+SETTINGS.kkm;
+  var pctInfo = 'NH1 '+SETTINGS.pct_nh1+'% + NH2 '+SETTINGS.pct_nh2+'% + ASTS '+SETTINGS.pct_asts+'% + ASAT '+SETTINGS.pct_asat+'% &nbsp;|&nbsp; KKM Rapor: '+getKKM(currentKelas);
 
   var mapelTabs = myMapel.length > 1
     ? '<span class="ctrl-label" style="margin-left:8px">Mapel:</span>' +
@@ -562,7 +573,7 @@ async function renderGuru() {
     var rank = ranks[nama];
     var rCls = rank===1?"rank-1":rank===2?"rank-2":rank===3?"rank-3":"rank-other";
     var kkmBadge = na !== null
-      ? (na >= SETTINGS.kkm
+      ? (na >= getKKM(currentKelas)
           ? '<span style="color:#1a7a5e;font-size:0.72rem;font-weight:600">✓ TERCAPAI</span>'
           : '<span style="color:#c0392b;font-size:0.72rem;font-weight:600">✗ BELUM</span>')
       : '—';
@@ -661,7 +672,7 @@ window.onInput = function(inp) {
   naEl.textContent = na.toFixed(2);
   predEl.className = "predikat-badge "+pred.cls;
   predEl.textContent = pred.text;
-  if (kkmEl) kkmEl.innerHTML = na >= SETTINGS.kkm
+  if (kkmEl) kkmEl.innerHTML = na >= getKKM(currentKelas)
     ? '<span style="color:#1a7a5e;font-size:0.72rem;font-weight:600">✓ TERCAPAI</span>'
     : '<span style="color:#c0392b;font-size:0.72rem;font-weight:600">✗ BELUM</span>';
   var tableData = getTableData();
@@ -929,17 +940,41 @@ window.renderSettings = async function() {
         '</div></div>';
     }).join("")+
 
-    '<div id="total-pct" style="padding:10px 14px;border-radius:8px;font-size:0.85rem;font-weight:500;margin-bottom:1rem;background:var(--teal-light);color:var(--teal-dark)">'+
+        '<div id="total-pct" style="padding:10px 14px;border-radius:8px;font-size:0.85rem;font-weight:500;margin-bottom:1rem;background:var(--teal-light);color:var(--teal-dark)">'+
     'Total: '+total+'% '+(total===100?'✓ Valid':'⚠ Harus 100%')+'</div>'+
 
-    '<div class="form-group" style="margin-bottom:1.5rem">'+
-    '<label>KKM (Kriteria Ketuntasan Minimal) <span id="lbl-kkm" style="color:var(--teal);font-weight:600">'+SETTINGS.kkm+'</span></label>'+
+    '<p class="section-label" style="margin:1.5rem 0 1rem 0">KKM Per Tingkatan Kelas</p>'+
+
+    '<div class="form-group" style="margin-bottom:1.25rem">'+
+    '<label>KKM Kelas 7 <span id="lbl-kkm7" style="color:var(--teal);font-weight:600">'+SETTINGS.kkm_kelas7+'</span></label>'+
     '<div style="display:flex;align-items:center;gap:10px">'+
-    '<input type="range" min="0" max="100" value="'+SETTINGS.kkm+'" id="rng-kkm" '+
-    'oninput="document.getElementById(\'lbl-kkm\').textContent=this.value;document.getElementById(\'num-kkm\').value=this.value" '+
+    '<input type="range" min="0" max="100" value="'+SETTINGS.kkm_kelas7+'" id="rng-kkm7" '+
+    'oninput="document.getElementById(\'lbl-kkm7\').textContent=this.value;document.getElementById(\'num-kkm7\').value=this.value" '+
     'style="flex:1;accent-color:var(--teal)">'+
-    '<input type="number" min="0" max="100" value="'+SETTINGS.kkm+'" id="num-kkm" '+
-    'oninput="document.getElementById(\'rng-kkm\').value=this.value;document.getElementById(\'lbl-kkm\').textContent=this.value" '+
+    '<input type="number" min="0" max="100" value="'+SETTINGS.kkm_kelas7+'" id="num-kkm7" '+
+    'oninput="document.getElementById(\'rng-kkm7\').value=this.value;document.getElementById(\'lbl-kkm7\').textContent=this.value" '+
+    'style="width:65px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Mono\',monospace;font-size:0.85rem;text-align:center;outline:none">'+
+    '</div></div>'+
+
+    '<div class="form-group" style="margin-bottom:1.25rem">'+
+    '<label>KKM Kelas 8 <span id="lbl-kkm8" style="color:var(--teal);font-weight:600">'+SETTINGS.kkm_kelas8+'</span></label>'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
+    '<input type="range" min="0" max="100" value="'+SETTINGS.kkm_kelas8+'" id="rng-kkm8" '+
+    'oninput="document.getElementById(\'lbl-kkm8\').textContent=this.value;document.getElementById(\'num-kkm8\').value=this.value" '+
+    'style="flex:1;accent-color:var(--teal)">'+
+    '<input type="number" min="0" max="100" value="'+SETTINGS.kkm_kelas8+'" id="num-kkm8" '+
+    'oninput="document.getElementById(\'rng-kkm8\').value=this.value;document.getElementById(\'lbl-kkm8\').textContent=this.value" '+
+    'style="width:65px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Mono\',monospace;font-size:0.85rem;text-align:center;outline:none">'+
+    '</div></div>'+
+
+    '<div class="form-group" style="margin-bottom:1.5rem">'+
+    '<label>KKM Kelas 9 <span id="lbl-kkm9" style="color:var(--teal);font-weight:600">'+SETTINGS.kkm_kelas9+'</span></label>'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
+    '<input type="range" min="0" max="100" value="'+SETTINGS.kkm_kelas9+'" id="rng-kkm9" '+
+    'oninput="document.getElementById(\'lbl-kkm9\').textContent=this.value;document.getElementById(\'num-kkm9\').value=this.value" '+
+    'style="flex:1;accent-color:var(--teal)">'+
+    '<input type="number" min="0" max="100" value="'+SETTINGS.kkm_kelas9+'" id="num-kkm9" '+
+    'oninput="document.getElementById(\'rng-kkm9\').value=this.value;document.getElementById(\'lbl-kkm9\').textContent=this.value" '+
     'style="width:65px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Mono\',monospace;font-size:0.85rem;text-align:center;outline:none">'+
     '</div></div>'+
 
@@ -951,7 +986,6 @@ window.renderSettings = async function() {
     '<div style="background:var(--orange-light);border:1px solid #f5c6a0;border-radius:10px;padding:12px 16px;max-width:500px;margin-top:12px;font-size:0.82rem;color:#7d3d0e">'+
     '⚠ Perubahan persentase akan langsung mempengaruhi perhitungan nilai akhir semua siswa. Pastikan total bobot = 100%.'+
     '</div>';
-
   document.getElementById("main-content").innerHTML = html;
 };
 
@@ -970,9 +1004,12 @@ window.simpanSettings = async function() {
   var nh2  = parseInt(document.getElementById("num-nh2").value)||0;
   var asts = parseInt(document.getElementById("num-asts").value)||0;
   var asat = parseInt(document.getElementById("num-asat").value)||0;
-  var kkm  = parseInt(document.getElementById("num-kkm").value)||75;
+  var kkm7 = parseInt(document.getElementById("num-kkm7").value)||75;
+  var kkm8 = parseInt(document.getElementById("num-kkm8").value)||75;
+  var kkm9 = parseInt(document.getElementById("num-kkm9").value)||75;
   if (nh1+nh2+asts+asat !== 100) { showToast("Total persentase harus 100%!"); return; }
-  SETTINGS.pct_nh1=nh1; SETTINGS.pct_nh2=nh2; SETTINGS.pct_asts=asts; SETTINGS.pct_asat=asat; SETTINGS.kkm=kkm;
+  SETTINGS.pct_nh1=nh1; SETTINGS.pct_nh2=nh2; SETTINGS.pct_asts=asts; SETTINGS.pct_asat=asat;
+  SETTINGS.kkm_kelas7=kkm7; SETTINGS.kkm_kelas8=kkm8; SETTINGS.kkm_kelas9=kkm9;
   try {
     await saveSettings();
     showToast("Pengaturan berhasil disimpan ✓");

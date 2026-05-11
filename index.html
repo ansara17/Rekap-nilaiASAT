@@ -861,6 +861,7 @@ window.renderAdmin = async function() {
     }).join("")+
     '<button class="export-btn" onclick="exportXLSX()" style="margin-left:8px">Export XLSX ↓</button>'+
     '<button class="tab-btn" onclick="renderAdmin()" style="margin-left:4px">🔄 Refresh</button>'+
+    '<button class="tab-btn" onclick="renderSiswaManagement()" style="margin-left:4px">👥 Manajemen Siswa</button>'+
     '<button class="tab-btn" onclick="renderSettings()" style="margin-left:4px">⚙️ Pengaturan</button></div>'+
     '<div class="section-label">Progres Input per Mata Pelajaran — Kelas '+currentKelas+'</div>'+
     '<div class="mapel-progress-grid">';
@@ -1024,6 +1025,340 @@ window.simpanSettings = async function() {
 
 window.adminKelas = function(k) { currentKelas=k; currentMapel=MAPEL_LIST[0]; renderAdmin(); };
 window.adminViewMapel = function(m) { currentMapel=m; renderAdmin(); };
+
+// ── MANAJEMEN SISWA ─────────────────────
+window.renderSiswaManagement = async function() {
+  document.getElementById("bottom-bar").classList.add("hidden");
+  var html = '<div class="page-header">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">'+
+    '<div><h2>👥 Manajemen Siswa</h2><p>Kelola data siswa — tambah, edit, atau hapus</p></div>'+
+    '<button class="btn-save" onclick="showAddSiswaModal()">➕ Tambah Siswa Baru</button>'+
+    '</div></div>'+
+    
+    '<div style="margin-bottom:1rem;display:flex;gap:10px;flex-wrap:wrap">'+
+    '<input type="text" id="search-siswa" placeholder="Cari nama atau NISN..." '+
+    'oninput="renderSiswaTable()" '+
+    'style="flex:1;min-width:200px;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:0.9rem;outline:none">'+
+    '</div>'+
+    
+    '<div class="table-wrap"><table><thead><tr>'+
+    '<th style="min-width:60px">NISN</th>'+
+    '<th style="min-width:200px">Nama Siswa</th>'+
+    '<th style="min-width:80px">Kelas</th>'+
+    '<th style="min-width:140px">Aksi</th>'+
+    '</tr></thead><tbody id="siswa-table-body"></tbody></table></div>';
+  
+  document.getElementById("main-content").innerHTML = html;
+  await renderSiswaTable();
+};
+
+window.renderSiswaTable = async function() {
+  var search = (document.getElementById("search-siswa")||{}).value||"";
+  var searchLower = search.toLowerCase();
+  var tbody = document.getElementById("siswa-table-body");
+  if (!tbody) return;
+  
+  var rows = [];
+  var kelasList = Object.keys(SISWA).sort();
+  
+  for (var ki = 0; ki < kelasList.length; ki++) {
+    var k = kelasList[ki];
+    var siswaList = SISWA[k] || [];
+    for (var si = 0; si < siswaList.length; si++) {
+      var nama = siswaList[si];
+      var nisn = "";
+      if (DATA_NISN && DATA_NISN[k] && DATA_NISN[k][nama]) {
+        nisn = DATA_NISN[k][nama];
+      }
+      
+      if (search && nama.toLowerCase().indexOf(searchLower) === -1 && nisn.indexOf(searchLower) === -1) {
+        continue;
+      }
+      
+      rows.push({nisn:nisn, nama:nama, kelas:k});
+    }
+  }
+  
+  rows.sort(function(a,b) { 
+    if (a.kelas !== b.kelas) return a.kelas.localeCompare(b.kelas);
+    return a.nama.localeCompare(b.nama);
+  });
+  
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--muted)">Tidak ada siswa ditemukan</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = rows.map(function(r) {
+    return '<tr>'+
+      '<td style="font-family:\'DM Mono\',monospace;font-size:0.78rem">'+(r.nisn||'-')+'</td>'+
+      '<td style="font-weight:500">'+r.nama+'</td>'+
+      '<td><span class="predikat-badge pred-b">'+r.kelas+'</span></td>'+
+      '<td>'+
+      '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="showEditSiswaModal(\\''+r.kelas+'\\',\\''+r.nama.replace(/'/g,"\\'")+'\\')">✏️ Edit</button>'+
+      '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="confirmHapusSiswa(\\''+r.kelas+'\\',\\''+r.nama.replace(/'/g,"\\'")+'\\')">🗑️ Hapus</button>'+
+      '</td>'+
+      '</tr>';
+  }).join("");
+};
+
+window.showAddSiswaModal = function() {
+  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)closeModal()">'+
+    '<div style="background:white;border-radius:12px;padding:1.5rem;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">'+
+    '<h3 style="font-family:\'Noto Serif\',serif;font-size:1.1rem;color:var(--teal-dark);margin-bottom:1.25rem">Tambah Siswa Baru</h3>'+
+    
+    '<div class="form-group">'+
+    '<label>Kelas</label>'+
+    '<select id="add-kelas" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;background:white;outline:none">'+
+    Object.keys(SISWA).sort().map(function(k){return '<option value="'+k+'">'+k+'</option>';}).join("")+
+    '</select></div>'+
+    
+    '<div class="form-group">'+
+    '<label>NISN</label>'+
+    '<input type="text" id="add-nisn" placeholder="Nomor Induk Siswa Nasional" '+
+    'style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Mono\',monospace;font-size:0.95rem;outline:none">'+
+    '</div>'+
+    
+    '<div class="form-group">'+
+    '<label>Nama Lengkap</label>'+
+    '<input type="text" id="add-nama" placeholder="Nama siswa" '+
+    'style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;outline:none">'+
+    '</div>'+
+    
+    '<div style="display:flex;gap:8px;margin-top:1.5rem">'+
+    '<button class="btn-save" style="flex:1" onclick="simpanSiswaBaru()">💾 Simpan</button>'+
+    '<button class="btn-template" style="flex:1" onclick="closeModal()">Batal</button>'+
+    '</div>'+
+    
+    '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.showEditSiswaModal = function(kelas, nama) {
+  var nisn = "";
+  if (DATA_NISN && DATA_NISN[kelas] && DATA_NISN[kelas][nama]) {
+    nisn = DATA_NISN[kelas][nama];
+  }
+  
+  var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this)closeModal()">'+
+    '<div style="background:white;border-radius:12px;padding:1.5rem;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.2)" onclick="event.stopPropagation()">'+
+    '<h3 style="font-family:\'Noto Serif\',serif;font-size:1.1rem;color:var(--teal-dark);margin-bottom:1.25rem">Edit Data Siswa</h3>'+
+    
+    '<div class="form-group">'+
+    '<label>Kelas</label>'+
+    '<select id="edit-kelas" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;background:white;outline:none">'+
+    Object.keys(SISWA).sort().map(function(k){return '<option value="'+k+'"'+(k===kelas?' selected':'')+'>'+k+'</option>';}).join("")+
+    '</select></div>'+
+    
+    '<div class="form-group">'+
+    '<label>NISN</label>'+
+    '<input type="text" id="edit-nisn" value="'+nisn+'" placeholder="Nomor Induk Siswa Nasional" '+
+    'style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Mono\',monospace;font-size:0.95rem;outline:none">'+
+    '</div>'+
+    
+    '<div class="form-group">'+
+    '<label>Nama Lengkap</label>'+
+    '<input type="text" id="edit-nama" value="'+nama+'" '+
+    'style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;outline:none">'+
+    '</div>'+
+    
+    '<input type="hidden" id="edit-nama-lama" value="'+nama+'">'+
+    '<input type="hidden" id="edit-kelas-lama" value="'+kelas+'">'+
+    
+    '<div style="display:flex;gap:8px;margin-top:1.5rem">'+
+    '<button class="btn-save" style="flex:1" onclick="updateSiswa()">💾 Update</button>'+
+    '<button class="btn-template" style="flex:1" onclick="closeModal()">Batal</button>'+
+    '</div>'+
+    
+    '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.closeModal = function() {
+  var modals = document.querySelectorAll('div[style*="position:fixed;inset:0;background:rgba(0,0,0,0.5)"]');
+  modals.forEach(function(m) { m.remove(); });
+};
+
+window.simpanSiswaBaru = async function() {
+  var kelas = document.getElementById("add-kelas").value;
+  var nisn = document.getElementById("add-nisn").value.trim();
+  var nama = document.getElementById("add-nama").value.trim();
+  
+  if (!nama) { showToast("Nama harus diisi!"); return; }
+  if (!kelas) { showToast("Kelas harus dipilih!"); return; }
+  
+  // Cek duplikasi
+  if (SISWA[kelas] && SISWA[kelas].find(function(n){return n.toLowerCase()===nama.toLowerCase();})) {
+    showToast("Siswa dengan nama ini sudah ada di kelas "+kelas);
+    return;
+  }
+  
+  try {
+    // Tambah ke array SISWA
+    if (!SISWA[kelas]) SISWA[kelas] = [];
+    SISWA[kelas].push(nama);
+    SISWA[kelas].sort();
+    
+    // Simpan NISN jika ada
+    if (nisn) {
+      if (!DATA_NISN[kelas]) DATA_NISN[kelas] = {};
+      DATA_NISN[kelas][nama] = nisn;
+    }
+    
+    // Simpan ke database
+    await setDoc(doc(db, "config", "siswa"), SISWA);
+    if (nisn) {
+      await setDoc(doc(db, "config", "nisn"), DATA_NISN);
+    }
+    
+    closeModal();
+    showToast("Siswa berhasil ditambahkan ✓");
+    await renderSiswaTable();
+    
+    // Refresh data global
+    await loadAllData();
+  } catch(e) {
+    console.error(e);
+    showToast("Gagal menyimpan siswa");
+  }
+};
+
+window.updateSiswa = async function() {
+  var kelasLama = document.getElementById("edit-kelas-lama").value;
+  var namaLama = document.getElementById("edit-nama-lama").value;
+  var kelasBaru = document.getElementById("edit-kelas").value;
+  var nisnBaru = document.getElementById("edit-nisn").value.trim();
+  var namaBaru = document.getElementById("edit-nama").value.trim();
+  
+  if (!namaBaru) { showToast("Nama harus diisi!"); return; }
+  
+  // Cek duplikasi di kelas baru
+  if (kelasBaru !== kelasLama && SISWA[kelasBaru] && SISWA[kelasBaru].find(function(n){return n.toLowerCase()===namaBaru.toLowerCase();})) {
+    showToast("Siswa dengan nama ini sudah ada di kelas "+kelasBaru);
+    return;
+  }
+  
+  try {
+    // Hapus dari posisi lama
+    var idx = SISWA[kelasLama].findIndex(function(n){return n===namaLama;});
+    if (idx >= 0) SISWA[kelasLama].splice(idx, 1);
+    
+    // Tambah ke kelas baru
+    if (!SISWA[kelasBaru]) SISWA[kelasBaru] = [];
+    SISWA[kelasBaru].push(namaBaru);
+    SISWA[kelasBaru].sort();
+    
+    // Update NISN
+    if (DATA_NISN[kelasLama] && DATA_NISN[kelasLama][namaLama]) {
+      delete DATA_NISN[kelasLama][namaLama];
+    }
+    if (nisnBaru) {
+      if (!DATA_NISN[kelasBaru]) DATA_NISN[kelasBaru] = {};
+      DATA_NISN[kelasBaru][namaBaru] = nisnBaru;
+    } else if (DATA_NISN[kelasBaru]) {
+      delete DATA_NISN[kelasBaru][namaBaru];
+    }
+    
+    // Jika pindah kelas, pindahkan juga data nilai
+    if (kelasBaru !== kelasLama && allData[kelasLama]) {
+      if (!allData[kelasBaru]) allData[kelasBaru] = {};
+      var mapelList = Object.keys(allData[kelasLama]);
+      for (var mi = 0; mi < mapelList.length; mi++) {
+        var m = mapelList[mi];
+        if (allData[kelasLama][m] && allData[kelasLama][m][namaLama]) {
+          if (!allData[kelasBaru][m]) allData[kelasBaru][m] = {};
+          allData[kelasBaru][m][namaBaru] = allData[kelasLama][m][namaLama];
+          delete allData[kelasLama][m][namaLama];
+        }
+      }
+    }
+    
+    // Simpan ke database
+    await setDoc(doc(db, "config", "siswa"), SISWA);
+    await setDoc(doc(db, "config", "nisn"), DATA_NISN);
+    
+    // Simpan data nilai yang dipindahkan
+    if (kelasBaru !== kelasLama) {
+      var mapelList2 = Object.keys(allData[kelasBaru]||{});
+      for (var mi2 = 0; mi2 < mapelList2.length; mi2++) {
+        var m2 = mapelList2[mi2];
+        if (allData[kelasBaru][m2]) {
+          var ref = doc(db, "nilai", kelasBaru+"_"+m2);
+          await setDoc(ref, allData[kelasBaru][m2], {merge:true});
+        }
+      }
+      // Hapus data lama dari kelas lama
+      var mapelList3 = Object.keys(allData[kelasLama]||{});
+      for (var mi3 = 0; mi3 < mapelList3.length; mi3++) {
+        var m3 = mapelList3[mi3];
+        if (Object.keys(allData[kelasLama][m3]||{}).length === 0) {
+          await deleteDoc(doc(db, "nilai", kelasLama+"_"+m3));
+        }
+      }
+    }
+    
+    closeModal();
+    showToast("Data siswa berhasil diupdate ✓");
+    await renderSiswaTable();
+    
+    // Refresh data global
+    await loadAllData();
+  } catch(e) {
+    console.error(e);
+    showToast("Gagal mengupdate siswa");
+  }
+};
+
+window.confirmHapusSiswa = function(kelas, nama) {
+  if (!confirm("Apakah Anda yakin ingin menghapus siswa "+nama+" dari kelas "+kelas+"?\n\nData nilai siswa ini juga akan ikut terhapus.")) {
+    return;
+  }
+  hapusSiswa(kelas, nama);
+};
+
+window.hapusSiswa = async function(kelas, nama) {
+  try {
+    // Hapus dari array SISWA
+    var idx = SISWA[kelas].findIndex(function(n){return n===nama;});
+    if (idx >= 0) SISWA[kelas].splice(idx, 1);
+    
+    // Hapus NISN
+    if (DATA_NISN[kelas] && DATA_NISN[kelas][nama]) {
+      delete DATA_NISN[kelas][nama];
+    }
+    
+    // Hapus data nilai dari semua mapel
+    if (allData[kelas]) {
+      var mapelList = Object.keys(allData[kelas]);
+      for (var mi = 0; mi < mapelList.length; mi++) {
+        var m = mapelList[mi];
+        if (allData[kelas][m] && allData[kelas][m][nama]) {
+          delete allData[kelas][m][nama];
+          // Simpan perubahan ke database
+          var ref = doc(db, "nilai", kelas+"_"+m);
+          if (Object.keys(allData[kelas][m]).length === 0) {
+            await deleteDoc(ref);
+          } else {
+            await setDoc(ref, allData[kelas][m], {merge:true});
+          }
+        }
+      }
+    }
+    
+    // Simpan perubahan SISWA dan NISN ke database
+    await setDoc(doc(db, "config", "siswa"), SISWA);
+    await setDoc(doc(db, "config", "nisn"), DATA_NISN);
+    
+    showToast("Siswa berhasil dihapus ✓");
+    await renderSiswaTable();
+    
+    // Refresh data global
+    await loadAllData();
+  } catch(e) {
+    console.error(e);
+    showToast("Gagal menghapus siswa");
+  }
+};
 
 // ── DOWNLOAD TEMPLATE ─────────────────────
 window.downloadTemplate = function() {

@@ -1090,14 +1090,13 @@ window.renderSiswaTable = async function() {
   }
   
   tbody.innerHTML = rows.map(function(r) {
+    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\''+encodeURIComponent(r.kelas)+'\',\''+encodeURIComponent(r.nama)+'\')">✏️ Edit</button>';
+    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.hapusSiswa(\''+encodeURIComponent(r.kelas)+'\',\''+encodeURIComponent(r.nama)+'\')">🗑️ Hapus</button>';
     return '<tr>'+
       '<td style="font-family:\'DM Mono\',monospace;font-size:0.78rem">'+(r.nisn||'-')+'</td>'+
       '<td style="font-weight:500">'+r.nama+'</td>'+
       '<td><span class="predikat-badge pred-b">'+r.kelas+'</span></td>'+
-      '<td>'+
-      '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="showEditSiswaModal(\''+r.kelas.replace(/'/g,"\\'")+'\'',\''+r.nama.replace(/'/g,"\\'")+'\')">✏️ Edit</button>'+
-      '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="confirmHapusSiswa(\''+r.kelas.replace(/'/g,"\\'")+'\'',\''+r.nama.replace(/'/g,"\\'")+'\')">🗑️ Hapus</button>'+
-      '</td>'+
+      '<td>'+editBtn+deleteBtn+'</td>'+
       '</tr>';
   }).join("");
 };
@@ -1132,6 +1131,18 @@ window.showAddSiswaModal = function() {
     
     '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.editSiswa = function(kelasEncoded, namaEncoded) {
+  var kelas = decodeURIComponent(kelasEncoded);
+  var nama = decodeURIComponent(namaEncoded);
+  window.showEditSiswaModal(kelas, nama);
+};
+
+window.hapusSiswa = function(kelasEncoded, namaEncoded) {
+  var kelas = decodeURIComponent(kelasEncoded);
+  var nama = decodeURIComponent(namaEncoded);
+  window.confirmHapusSiswa(kelas, nama);
 };
 
 window.showEditSiswaModal = function(kelas, nama) {

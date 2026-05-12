@@ -1196,7 +1196,7 @@ window.showAddSiswaModal = function() {
     
     '<div style="display:flex;gap:8px;margin-top:1.5rem">'+
     '<button class="btn-save" style="flex:1" onclick="simpanSiswaBaru()">💾 Simpan</button>'+
-    '<button class="btn-template" style="flex:1" onclick="var m=document.querySelectorAll(\'div[style*="position:fixed;inset:0;background:rgba(0,0,0,0.5)"]\');m.forEach(function(x){x.remove();});">Batal</button>'+
+    '<button class="btn-template" style="flex:1" onclick="closeModalSiswa()">Batal</button>'+
     '</div>'+
     
     '</div></div>';
@@ -1248,7 +1248,7 @@ window.showEditSiswaModal = function(kelas, nama) {
     
     '<div style="display:flex;gap:8px;margin-top:1.5rem">'+
     '<button class="btn-save" style="flex:1" onclick="updateSiswa()">💾 Update</button>'+
-    '<button class="btn-template" style="flex:1" onclick="var m=document.querySelectorAll(\'div[style*="position:fixed;inset:0;background:rgba(0,0,0,0.5)"]\');m.forEach(function(x){x.remove();});">Batal</button>'+
+    '<button class="btn-template" style="flex:1" onclick="closeModalSiswa()">Batal</button>'+
     '</div>'+
     
     '</div></div>';
@@ -1414,7 +1414,7 @@ window.hapusSiswa = async function(kelas, nama) {
     }
     
     // Hapus data nilai dari semua mapel
-    if (allData[kelas]) {
+    if (typeof allData !== 'undefined' && allData && allData[kelas]) {
       var mapelList = Object.keys(allData[kelas]);
       for (var mi = 0; mi < mapelList.length; mi++) {
         var m = mapelList[mi];
@@ -1433,7 +1433,7 @@ window.hapusSiswa = async function(kelas, nama) {
     
     // Simpan perubahan SISWA dan NISN ke database
     await setDoc(doc(db, "config", "siswa"), SISWA);
-    await setDoc(doc(db, "config", "nisn"), DATA_NISN);
+    if (typeof DATA_NISN !== 'undefined') { await setDoc(doc(db, "config", "nisn"), DATA_NISN); }
     
     showToast("Siswa berhasil dihapus ✓");
     renderSiswaTableFull();

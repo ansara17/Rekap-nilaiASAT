@@ -1139,8 +1139,8 @@ window.filterSiswaTable = function() {
   }
   
   tbody.innerHTML = rows.map(function(r) {
-    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\\''+encodeURIComponent(r.kelas)+'\\',\\''+encodeURIComponent(r.nama)+'\\')">✏️ Edit</button>';
-    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.hapusSiswa(\\''+encodeURIComponent(r.kelas)+'\\',\\''+encodeURIComponent(r.nama)+'\\')">🗑️ Hapus</button>';
+    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\''+encodeURIComponent(r.kelas)+'\',\''+encodeURIComponent(r.nama)+'\')">✏️ Edit</button>';
+    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.hapusSiswa(\''+encodeURIComponent(r.kelas)+'\',\''+encodeURIComponent(r.nama)+'\')">🗑️ Hapus</button>';
     return '<tr>'+
       '<td style="font-family:\'DM Mono\',monospace;font-size:0.78rem">'+(r.nisn||'-')+'</td>'+
       '<td style="font-weight:500">'+r.nama+'</td>'+

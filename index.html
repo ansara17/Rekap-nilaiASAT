@@ -1065,11 +1065,18 @@ window.renderSiswaManagement = async function() {
     '<div><h2>👥 Manajemen Siswa</h2><p>Kelola data siswa — tambah, edit, atau hapus</p></div>'+
     '<button class="btn-save" onclick="showAddSiswaModal()">➕ Tambah Siswa Baru</button>'+
     '</div></div>'+
-    '<div style="margin-bottom:1rem;display:flex;gap:10px;flex-wrap:wrap">'+
-    '<input type="text" id="search-siswa" placeholder="Cari nama atau NISN..." '+
+    '<div style="margin-bottom:1rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
+    '<input type="text" id="search-siswa" placeholder="Ketik nama siswa..." '+
     'style="flex:1;min-width:200px;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:0.9rem;outline:none" '+
-    'oninput="window.renderSiswaTable()">'+
-    '</div>'+
+    'onkeyup="filterSiswaTable()">'+
+    '<select id="filter-kelas" onchange="filterSiswaTable()" style="padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:\'DM Sans\',sans-serif;font-size:0.9rem;background:white;cursor:pointer">'+
+    '<option value="">Semua Kelas</option>';
+  
+  var kelasList = Object.keys(SISWA).sort();
+  for (var i = 0; i < kelasList.length; i++) {
+    html += '<option value="'+kelasList[i]+'">'+kelasList[i]+'</option>';
+  }
+  html += '</select></div>'+
     '<div class="table-wrap"><table><thead><tr>'+
     '<th style="min-width:60px">NISN</th>'+
     '<th style="min-width:200px">Nama Siswa</th>'+
@@ -1079,13 +1086,19 @@ window.renderSiswaManagement = async function() {
   
   document.getElementById("main-content").innerHTML = html;
   
-  await renderSiswaTable();
+  renderSiswaTableFull();
 };
 
-window.renderSiswaTable = async function() {
+
+window.renderSiswaTableFull = function() {
+  filterSiswaTable();
+};
+
+window.filterSiswaTable = function() {
   var searchInput = document.getElementById("search-siswa");
-  var search = searchInput ? searchInput.value : "";
-  var searchLower = search.toLowerCase();
+  var kelasSelect = document.getElementById("filter-kelas");
+  var search = searchInput ? searchInput.value.toLowerCase() : "";
+  var filterKelas = kelasSelect ? kelasSelect.value : "";
   var tbody = document.getElementById("siswa-table-body");
   if (!tbody) return;
   
@@ -1094,6 +1107,11 @@ window.renderSiswaTable = async function() {
   
   for (var ki = 0; ki < kelasList.length; ki++) {
     var k = kelasList[ki];
+    
+    if (filterKelas && k !== filterKelas) {
+      continue;
+    }
+    
     var siswaList = SISWA[k] || [];
     for (var si = 0; si < siswaList.length; si++) {
       var nama = siswaList[si];
@@ -1102,7 +1120,7 @@ window.renderSiswaTable = async function() {
         nisn = DATA_NISN[k][nama];
       }
       
-      if (search && nama.toLowerCase().indexOf(searchLower) === -1 && String(nisn).indexOf(searchLower) === -1) {
+      if (search && nama.toLowerCase().indexOf(search) === -1 && String(nisn).indexOf(search) === -1) {
         continue;
       }
       
@@ -1121,8 +1139,8 @@ window.renderSiswaTable = async function() {
   }
   
   tbody.innerHTML = rows.map(function(r) {
-    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\''+encodeURIComponent(r.kelas)+'\',\''+encodeURIComponent(r.nama)+'\')">✏️ Edit</button>';
-    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.hapusSiswa(\''+encodeURIComponent(r.kelas)+'\',\''+encodeURIComponent(r.nama)+'\')">🗑️ Hapus</button>';
+    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\\''+encodeURIComponent(r.kelas)+'\\',\\''+encodeURIComponent(r.nama)+'\\')">✏️ Edit</button>';
+    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.hapusSiswa(\\''+encodeURIComponent(r.kelas)+'\\',\\''+encodeURIComponent(r.nama)+'\\')">🗑️ Hapus</button>';
     return '<tr>'+
       '<td style="font-family:\'DM Mono\',monospace;font-size:0.78rem">'+(r.nisn||'-')+'</td>'+
       '<td style="font-weight:500">'+r.nama+'</td>'+
@@ -1131,7 +1149,8 @@ window.renderSiswaTable = async function() {
       '</tr>';
   }).join("");
 };
-window.renderSiswaTable = window.renderSiswaTable || renderSiswaTable;
+window.filterSiswaTable = window.filterSiswaTable || filterSiswaTable;
+window.renderSiswaTableFull = window.renderSiswaTableFull || renderSiswaTableFull;
 
 window.showAddSiswaModal = function() {
   var html = '<div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999" onclick="if(event.target===this){var m=document.querySelectorAll(\'div[style*="position:fixed;inset:0;background:rgba(0,0,0,0.5)"]\');m.forEach(function(x){x.remove();});}">'+
@@ -1221,7 +1240,8 @@ window.closeModalSiswa = function() {
   var modals = document.querySelectorAll('div[style*="position:fixed;inset:0;background:rgba(0,0,0,0.5)"]');
   modals.forEach(function(m) { m.remove(); });
 };
-window.renderSiswaTable = window.renderSiswaTable || renderSiswaTable;
+window.filterSiswaTable = window.filterSiswaTable || filterSiswaTable;
+window.renderSiswaTableFull = window.renderSiswaTableFull || renderSiswaTableFull;
 window.closeModalSiswa = window.closeModalSiswa || closeModalSiswa;
 
 window.simpanSiswaBaru = async function() {
@@ -1258,7 +1278,7 @@ window.simpanSiswaBaru = async function() {
     
     closeModal();
     showToast("Siswa berhasil ditambahkan ✓");
-    await renderSiswaTable();
+    renderSiswaTableFull();
     
     // Refresh data global
     await loadAllData();
@@ -1344,7 +1364,7 @@ window.updateSiswa = async function() {
     
     closeModal();
     showToast("Data siswa berhasil diupdate ✓");
-    await renderSiswaTable();
+    renderSiswaTableFull();
     
     // Refresh data global
     await loadAllData();
@@ -1395,7 +1415,7 @@ window.hapusSiswa = async function(kelas, nama) {
     await setDoc(doc(db, "config", "nisn"), DATA_NISN);
     
     showToast("Siswa berhasil dihapus ✓");
-    await renderSiswaTable();
+    renderSiswaTableFull();
     
     // Refresh data global
     await loadAllData();

@@ -1335,7 +1335,7 @@ window.simpanSiswaBaru = async function() {
     renderSiswaTableFull();
     
     // Refresh data global
-    await loadAllData();
+    await window.loadAllData();
   } catch(e) {
     console.error(e);
     showToast("Gagal menyimpan siswa");
@@ -1422,7 +1422,7 @@ window.updateSiswa = async function() {
     renderSiswaTableFull();
     
     // Refresh data global
-    await loadAllData();
+    await window.loadAllData();
   } catch(e) {
     console.error(e);
     showToast("Gagal mengupdate siswa");
@@ -1473,7 +1473,7 @@ window.hapusSiswa = async function(kelas, nama) {
     renderSiswaTableFull();
     
     // Refresh data global
-    await loadAllData();
+    await window.loadAllData();
   } catch(e) {
     console.error(e);
     showToast("Gagal menghapus siswa");
@@ -1877,7 +1877,7 @@ async function initApp() {
   await loadSiswaData();
   
   // Load all data (SISWA, NISN, and all nilai)
-  await loadAllData();
+  await window.loadAllData();
 
   // Rebuild MAPEL_GURU using the proper function
   buildMapelGuru();

@@ -1122,7 +1122,7 @@ window.filterSiswaTable = function() {
     for (var si = 0; si < siswaList.length; si++) {
       var nama = siswaList[si];
       var nisn = "";
-      if (DATA_NISN && DATA_NISN[k] && DATA_NISN[k][nama]) {
+      if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[k] && DATA_NISN[k][nama]) {
         nisn = DATA_NISN[k][nama];
       }
       
@@ -1203,7 +1203,7 @@ window.hapusSiswa = function(kelasEncoded, namaEncoded) {
 
 window.showEditSiswaModal = function(kelas, nama) {
   var nisn = "";
-  if (DATA_NISN && DATA_NISN[kelas] && DATA_NISN[kelas][nama]) {
+  if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[kelas] && DATA_NISN[kelas][nama]) {
     nisn = DATA_NISN[kelas][nama];
   }
   
@@ -1271,6 +1271,7 @@ window.simpanSiswaBaru = async function() {
     
     // Simpan NISN jika ada
     if (nisn) {
+      if (typeof DATA_NISN === 'undefined') { window.DATA_NISN = {}; }
       if (!DATA_NISN[kelas]) DATA_NISN[kelas] = {};
       DATA_NISN[kelas][nama] = nisn;
     }
@@ -1319,13 +1320,14 @@ window.updateSiswa = async function() {
     SISWA[kelasBaru].sort();
     
     // Update NISN
-    if (DATA_NISN[kelasLama] && DATA_NISN[kelasLama][namaLama]) {
+    if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[kelasLama] && DATA_NISN[kelasLama][namaLama]) {
       delete DATA_NISN[kelasLama][namaLama];
     }
     if (nisnBaru) {
+      if (typeof DATA_NISN === 'undefined') { window.DATA_NISN = {}; }
       if (!DATA_NISN[kelasBaru]) DATA_NISN[kelasBaru] = {};
       DATA_NISN[kelasBaru][namaBaru] = nisnBaru;
-    } else if (DATA_NISN[kelasBaru]) {
+    } else if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[kelasBaru]) {
       delete DATA_NISN[kelasBaru][namaBaru];
     }
     
@@ -1393,7 +1395,7 @@ window.hapusSiswa = async function(kelas, nama) {
     if (idx >= 0) SISWA[kelas].splice(idx, 1);
     
     // Hapus NISN
-    if (DATA_NISN[kelas] && DATA_NISN[kelas][nama]) {
+    if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[kelas] && DATA_NISN[kelas][nama]) {
       delete DATA_NISN[kelas][nama];
     }
     

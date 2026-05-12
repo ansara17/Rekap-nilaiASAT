@@ -1100,10 +1100,16 @@ window.filterSiswaTable = function() {
   var search = searchInput ? searchInput.value.toLowerCase() : "";
   var filterKelas = kelasSelect ? kelasSelect.value : "";
   var tbody = document.getElementById("siswa-table-body");
-  if (!tbody) return;
+  if (!tbody) {
+    console.error("tbody siswa-table-body tidak ditemukan!");
+    return;
+  }
+  
+  console.log("Search term:", search);
+  console.log("Filter kelas:", filterKelas);
   
   var rows = [];
-  var kelasList = Object.keys(SISWA).sort();
+  var kelasList = Object.keys(SISWA || {}).sort();
   
   for (var ki = 0; ki < kelasList.length; ki++) {
     var k = kelasList[ki];
@@ -1128,10 +1134,7 @@ window.filterSiswaTable = function() {
     }
   }
   
-  rows.sort(function(a,b) { 
-    if (a.kelas !== b.kelas) return a.kelas.localeCompare(b.kelas);
-    return a.nama.localeCompare(b.nama);
-  });
+  console.log("Rows found:", rows.length);
   
   if (rows.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--muted)">Tidak ada siswa ditemukan</td></tr>';
@@ -1139,8 +1142,10 @@ window.filterSiswaTable = function() {
   }
   
   tbody.innerHTML = rows.map(function(r) {
-    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa('" + encodeURIComponent(r.kelas) + "','" + encodeURIComponent(r.nama) + "')">✏️ Edit</button>';
-    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.hapusSiswa('" + encodeURIComponent(r.kelas) + "','" + encodeURIComponent(r.nama) + "')">🗑️ Hapus</button>';
+    var encodedKelas = encodeURIComponent(r.kelas);
+    var encodedNama = encodeURIComponent(r.nama);
+    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\')">✏️ Edit</button>';
+    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.hapusSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\')">🗑️ Hapus</button>';
     return '<tr>'+
       '<td style="font-family:\'DM Mono\',monospace;font-size:0.78rem">'+(r.nisn||'-')+'</td>'+
       '<td style="font-weight:500">'+r.nama+'</td>'+

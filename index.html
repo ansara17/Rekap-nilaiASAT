@@ -465,6 +465,20 @@ window.saveSettings = async function() {
   settingsCache = true;
 };
 
+window.loadSiswaData = async function() {
+  try {
+    var snap = await getDoc(doc(db, "config", "nisn"));
+    if (snap.exists()) {
+      window.DATA_NISN = snap.data();
+    } else {
+      window.DATA_NISN = {};
+    }
+  } catch(e) { 
+    console.log("Using empty DATA_NISN"); 
+    window.DATA_NISN = {};
+  }
+};
+
 // ── CALC ──────────────────────────────────
 window.hitungNA = function(nh1, nh2, asts, asat) {
   var vals = [nh1, nh2, asts, asat].map(function(v) { return parseFloat(v) || 0; });
@@ -1824,6 +1838,9 @@ async function initApp() {
       });
     }
   } catch(e) { console.log("Using default accounts"); }
+
+  // Load DATA_NISN from Firebase
+  await loadSiswaData();
 
   // Rebuild MAPEL_GURU using the proper function
   buildMapelGuru();

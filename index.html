@@ -327,6 +327,10 @@ var currentTab = "rapor"; // "rapor" | "asaj"
 var unsaved = false;
 var nilaiCache = {}; // cache: "kelas_mapel" -> data
 
+// Inisialisasi window.KELAS dan window.MAPEL dari data lokal
+window.KELAS = Object.keys(SISWA);
+window.MAPEL = MAPEL_LIST;
+
 // ── FIREBASE HELPERS ──────────────────────
 window.docId = function(kelas, mapel) {
   return kelas + "_" + mapel.replace(/\s+/g, "_");
@@ -482,6 +486,27 @@ window.loadSiswaData = async function() {
 // ── LOAD ALL DATA ─────────────────────────
 window.loadAllData = async function() {
   try {
+    // Pastikan KELAS dan MAPEL sudah terdefinisi
+    if (typeof window.KELAS === 'undefined' || !window.KELAS) {
+      console.log('Memuat daftar kelas...');
+      const kelasSnap = await getDoc(doc(db, "master", "KELAS"));
+      if (kelasSnap.exists()) {
+        window.KELAS = kelasSnap.data().list || [];
+      } else {
+        window.KELAS = [];
+      }
+    }
+    
+    if (typeof window.MAPEL === 'undefined' || !window.MAPEL) {
+      console.log('Memuat daftar mapel...');
+      const mapelSnap = await getDoc(doc(db, "master", "MAPEL"));
+      if (mapelSnap.exists()) {
+        window.MAPEL = mapelSnap.data().list || [];
+      } else {
+        window.MAPEL = [];
+      }
+    }
+
     // Load data siswa
     var snapSiswa = await getDoc(doc(db, "config", "siswa"));
     if (snapSiswa.exists()) {
@@ -495,9 +520,9 @@ window.loadAllData = async function() {
     
     // Load all nilai untuk setiap kelas dan mapel
     window.allData = {};
-    for (var k of KELAS) {
+    for (var k of window.KELAS) {
       window.allData[k] = {};
-      for (var m of MAPEL) {
+      for (var m of window.MAPEL) {
         var d = await loadNilai(k, m);
         window.allData[k][m] = d;
       }
@@ -1166,12 +1191,12 @@ window.filterSiswaTable = function() {
       continue;
     }
     
-    var siswaList = SISWA[k] || [];
+    var siswaList = window.SISWA[k] || [];
     for (var si = 0; si < siswaList.length; si++) {
       var nama = siswaList[si];
       var nisn = "";
-      if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[k] && DATA_NISN[k][nama]) {
-        nisn = DATA_NISN[k][nama];
+      if (typeof window.DATA_NISN !== 'undefined' && window.DATA_NISN && window.DATA_NISN[k] && window.DATA_NISN[k][nama]) {
+        nisn = window.DATA_NISN[k][nama];
       }
       
       if (search && nama.toLowerCase().indexOf(search) === -1 && String(nisn).indexOf(search) === -1) {
@@ -1306,28 +1331,28 @@ window.simpanSiswaBaru = async function() {
   if (!kelas) { showToast("Kelas harus dipilih!"); return; }
   
   // Cek duplikasi
-  if (SISWA[kelas] && SISWA[kelas].find(function(n){return n.toLowerCase()===nama.toLowerCase();})) {
+  if (window.SISWA[kelas] && window.SISWA[kelas].find(function(n){return n.toLowerCase()===nama.toLowerCase();})) {
     showToast("Siswa dengan nama ini sudah ada di kelas "+kelas);
     return;
   }
   
   try {
     // Tambah ke array SISWA
-    if (!SISWA[kelas]) SISWA[kelas] = [];
-    SISWA[kelas].push(nama);
-    SISWA[kelas].sort();
+    if (!window.SISWA[kelas]) window.SISWA[kelas] = [];
+    window.SISWA[kelas].push(nama);
+    window.SISWA[kelas].sort();
     
     // Simpan NISN jika ada
     if (nisn) {
-      if (typeof DATA_NISN === 'undefined') { window.DATA_NISN = {}; }
-      if (!DATA_NISN[kelas]) DATA_NISN[kelas] = {};
-      DATA_NISN[kelas][nama] = nisn;
+      if (typeof window.DATA_NISN === 'undefined') { window.DATA_NISN = {}; }
+      if (!window.DATA_NISN[kelas]) window.DATA_NISN[kelas] = {};
+      window.DATA_NISN[kelas][nama] = nisn;
     }
     
     // Simpan ke database
-    await setDoc(doc(db, "config", "siswa"), SISWA);
+    await setDoc(doc(db, "config", "siswa"), window.SISWA);
     if (nisn) {
-      await setDoc(doc(db, "config", "nisn"), DATA_NISN);
+      await setDoc(doc(db, "config", "nisn"), window.DATA_NISN);
     }
     
     closeModal();
@@ -1352,31 +1377,31 @@ window.updateSiswa = async function() {
   if (!namaBaru) { showToast("Nama harus diisi!"); return; }
   
   // Cek duplikasi di kelas baru
-  if (kelasBaru !== kelasLama && SISWA[kelasBaru] && SISWA[kelasBaru].find(function(n){return n.toLowerCase()===namaBaru.toLowerCase();})) {
+  if (kelasBaru !== kelasLama && window.SISWA[kelasBaru] && window.SISWA[kelasBaru].find(function(n){return n.toLowerCase()===namaBaru.toLowerCase();})) {
     showToast("Siswa dengan nama ini sudah ada di kelas "+kelasBaru);
     return;
   }
   
   try {
     // Hapus dari posisi lama
-    var idx = SISWA[kelasLama].findIndex(function(n){return n===namaLama;});
-    if (idx >= 0) SISWA[kelasLama].splice(idx, 1);
+    var idx = window.SISWA[kelasLama].findIndex(function(n){return n===namaLama;});
+    if (idx >= 0) window.SISWA[kelasLama].splice(idx, 1);
     
     // Tambah ke kelas baru
-    if (!SISWA[kelasBaru]) SISWA[kelasBaru] = [];
-    SISWA[kelasBaru].push(namaBaru);
-    SISWA[kelasBaru].sort();
+    if (!window.SISWA[kelasBaru]) window.SISWA[kelasBaru] = [];
+    window.SISWA[kelasBaru].push(namaBaru);
+    window.SISWA[kelasBaru].sort();
     
     // Update NISN
-    if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[kelasLama] && DATA_NISN[kelasLama][namaLama]) {
-      delete DATA_NISN[kelasLama][namaLama];
+    if (typeof window.DATA_NISN !== 'undefined' && window.DATA_NISN && window.DATA_NISN[kelasLama] && window.DATA_NISN[kelasLama][namaLama]) {
+      delete window.DATA_NISN[kelasLama][namaLama];
     }
     if (nisnBaru) {
-      if (typeof DATA_NISN === 'undefined') { window.DATA_NISN = {}; }
-      if (!DATA_NISN[kelasBaru]) DATA_NISN[kelasBaru] = {};
-      DATA_NISN[kelasBaru][namaBaru] = nisnBaru;
-    } else if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[kelasBaru]) {
-      delete DATA_NISN[kelasBaru][namaBaru];
+      if (typeof window.DATA_NISN === 'undefined') { window.DATA_NISN = {}; }
+      if (!window.DATA_NISN[kelasBaru]) window.DATA_NISN[kelasBaru] = {};
+      window.DATA_NISN[kelasBaru][namaBaru] = nisnBaru;
+    } else if (typeof window.DATA_NISN !== 'undefined' && window.DATA_NISN && window.DATA_NISN[kelasBaru]) {
+      delete window.DATA_NISN[kelasBaru][namaBaru];
     }
     
     // Jika pindah kelas, pindahkan juga data nilai
@@ -1394,8 +1419,8 @@ window.updateSiswa = async function() {
     }
     
     // Simpan ke database
-    await setDoc(doc(db, "config", "siswa"), SISWA);
-    await setDoc(doc(db, "config", "nisn"), DATA_NISN);
+    await setDoc(doc(db, "config", "siswa"), window.SISWA);
+    await setDoc(doc(db, "config", "nisn"), window.DATA_NISN);
     
     // Simpan data nilai yang dipindahkan
     if (kelasBaru !== kelasLama) {
@@ -1439,12 +1464,12 @@ window.confirmHapusSiswa = function(kelas, nama) {
 window.hapusSiswa = async function(kelas, nama) {
   try {
     // Hapus dari array SISWA
-    var idx = SISWA[kelas].findIndex(function(n){return n===nama;});
-    if (idx >= 0) SISWA[kelas].splice(idx, 1);
+    var idx = window.SISWA[kelas].findIndex(function(n){return n===nama;});
+    if (idx >= 0) window.SISWA[kelas].splice(idx, 1);
     
     // Hapus NISN
-    if (typeof DATA_NISN !== 'undefined' && DATA_NISN && DATA_NISN[kelas] && DATA_NISN[kelas][nama]) {
-      delete DATA_NISN[kelas][nama];
+    if (typeof window.DATA_NISN !== 'undefined' && window.DATA_NISN && window.DATA_NISN[kelas] && window.DATA_NISN[kelas][nama]) {
+      delete window.DATA_NISN[kelas][nama];
     }
     
     // Hapus data nilai dari semua mapel
@@ -1466,8 +1491,8 @@ window.hapusSiswa = async function(kelas, nama) {
     }
     
     // Simpan perubahan SISWA dan NISN ke database
-    await setDoc(doc(db, "config", "siswa"), SISWA);
-    if (typeof DATA_NISN !== 'undefined') { await setDoc(doc(db, "config", "nisn"), DATA_NISN); }
+    await setDoc(doc(db, "config", "siswa"), window.SISWA);
+    if (typeof window.DATA_NISN !== 'undefined') { await setDoc(doc(db, "config", "nisn"), window.DATA_NISN); }
     
     showToast("Siswa berhasil dihapus ✓");
     renderSiswaTableFull();

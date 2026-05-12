@@ -479,6 +479,40 @@ window.loadSiswaData = async function() {
   }
 };
 
+// ── LOAD ALL DATA ─────────────────────────
+window.loadAllData = async function() {
+  try {
+    // Load data siswa
+    var snapSiswa = await getDoc(doc(db, "config", "siswa"));
+    if (snapSiswa.exists()) {
+      window.SISWA = snapSiswa.data();
+    } else {
+      window.SISWA = {};
+    }
+    
+    // Load data NISN
+    await window.loadSiswaData();
+    
+    // Load all nilai untuk setiap kelas dan mapel
+    window.allData = {};
+    for (var k of KELAS) {
+      window.allData[k] = {};
+      for (var m of MAPEL) {
+        var d = await loadNilai(k, m);
+        window.allData[k][m] = d;
+      }
+      // Load ASAJ juga
+      var asaj = await loadNilai(k, "ASAJ");
+      window.allData[k]["ASAJ"] = asaj;
+    }
+  } catch(e) {
+    console.error("loadAllData error", e);
+    window.SISWA = {};
+    window.DATA_NISN = {};
+    window.allData = {};
+  }
+};
+
 // ── CALC ──────────────────────────────────
 window.hitungNA = function(nh1, nh2, asts, asat) {
   var vals = [nh1, nh2, asts, asat].map(function(v) { return parseFloat(v) || 0; });
@@ -1841,6 +1875,9 @@ async function initApp() {
 
   // Load DATA_NISN from Firebase
   await loadSiswaData();
+  
+  // Load all data (SISWA, NISN, and all nilai)
+  await loadAllData();
 
   // Rebuild MAPEL_GURU using the proper function
   buildMapelGuru();

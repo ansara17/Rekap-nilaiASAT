@@ -1218,7 +1218,7 @@ window.filterSiswaTable = function() {
     var encodedKelas = encodeURIComponent(r.kelas);
     var encodedNama = encodeURIComponent(r.nama);
     var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\')">✏️ Edit</button>';
-    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.hapusSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\')">🗑️ Hapus</button>';
+    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.confirmHapusSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\')">🗑️ Hapus</button>';
     return '<tr>'+
       '<td style="font-family:\'DM Mono\',monospace;font-size:0.78rem">'+(r.nisn||'-')+'</td>'+
       '<td style="font-weight:500">'+r.nama+'</td>'+
@@ -1266,12 +1266,6 @@ window.editSiswa = function(kelasEncoded, namaEncoded) {
   var kelas = decodeURIComponent(kelasEncoded);
   var nama = decodeURIComponent(namaEncoded);
   window.showEditSiswaModal(kelas, nama);
-};
-
-window.hapusSiswa = function(kelasEncoded, namaEncoded) {
-  var kelas = decodeURIComponent(kelasEncoded);
-  var nama = decodeURIComponent(namaEncoded);
-  window.confirmHapusSiswa(kelas, nama);
 };
 
 window.showEditSiswaModal = function(kelas, nama) {
@@ -1458,7 +1452,7 @@ window.confirmHapusSiswa = function(kelas, nama) {
   if (!confirm("Apakah Anda yakin ingin menghapus siswa "+nama+" dari kelas "+kelas+"?\n\nData nilai siswa ini juga akan ikut terhapus.")) {
     return;
   }
-  hapusSiswa(kelas, nama);
+  window.hapusSiswa(kelas, nama);
 };
 
 window.hapusSiswa = async function(kelas, nama) {

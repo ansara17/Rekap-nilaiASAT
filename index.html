@@ -1463,9 +1463,19 @@ window.confirmHapusSiswa = function(kelas, nama) {
 
 window.hapusSiswa = async function(kelas, nama) {
   try {
+    // Pastikan SISWA[kelas] ada
+    if (!window.SISWA || !window.SISWA[kelas]) {
+      showToast("Data kelas tidak ditemukan");
+      return;
+    }
+    
     // Hapus dari array SISWA
     var idx = window.SISWA[kelas].findIndex(function(n){return n===nama;});
-    if (idx >= 0) window.SISWA[kelas].splice(idx, 1);
+    if (idx >= 0) {
+      window.SISWA[kelas].splice(idx, 1);
+    } else {
+      console.warn("Siswa tidak ditemukan di array SISWA");
+    }
     
     // Hapus NISN
     if (typeof window.DATA_NISN !== 'undefined' && window.DATA_NISN && window.DATA_NISN[kelas] && window.DATA_NISN[kelas][nama]) {
@@ -1492,13 +1502,17 @@ window.hapusSiswa = async function(kelas, nama) {
     
     // Simpan perubahan SISWA dan NISN ke database
     await setDoc(doc(db, "config", "siswa"), window.SISWA);
-    if (typeof window.DATA_NISN !== 'undefined') { await setDoc(doc(db, "config", "nisn"), window.DATA_NISN); }
+    if (typeof window.DATA_NISN !== 'undefined') { 
+      await setDoc(doc(db, "config", "nisn"), window.DATA_NISN); 
+    }
     
-    showToast("Siswa berhasil dihapus ✓");
+    // Refresh data global dari database terlebih dahulu
+    await window.loadAllData();
+    
+    // Baru render ulang tabel dengan data yang sudah fresh
     renderSiswaTableFull();
     
-    // Refresh data global
-    await window.loadAllData();
+    showToast("Siswa berhasil dihapus ✓");
   } catch(e) {
     console.error(e);
     showToast("Gagal menghapus siswa");

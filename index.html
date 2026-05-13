@@ -617,7 +617,7 @@ async function renderGuru() {
   var mapelTabs = myMapel.length > 1
     ? '<span class="ctrl-label" style="margin-left:8px">Mapel:</span>' +
       myMapel.map(function(m) {
-        return '<button class="tab-btn'+(m===currentMapel?" active":"")+'" onclick="switchMapel(\''+m+')">'+m+'</button>';
+        return '<button class="tab-btn'+(m===currentMapel?" active":"")+'" onclick="switchMapel(\''+m+'")">'+m+'</button>';
       }).join("") : "";
 
   var html =
@@ -626,12 +626,12 @@ async function renderGuru() {
     '<p style="font-size:0.75rem;color:var(--teal);margin-top:3px">'+pctInfo+'</p></div>'+
     // Section tabs
     '<div style="display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:2px solid var(--border);padding-bottom:0">'+
-    '<button onclick="setTab(\'rapor\')" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid var(--teal);color:var(--teal);margin-bottom:-2px">📋 Nilai Rapor</button>'+
-    '<button onclick="setTab(\'asaj\')" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px">🎓 Nilai ASAJ</button>'+
+    '<button onclick="setTab(\'rapor\'")" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid var(--teal);color:var(--teal);margin-bottom:-2px">📋 Nilai Rapor</button>'+
+    '<button onclick="setTab(\'asaj\'")" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px">🎓 Nilai ASAJ</button>'+
     '</div>'+
     '<div class="controls"><span class="ctrl-label">Kelas:</span>'+
     Object.keys(SISWA).sort().map(function(k){
-      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="switchKelas(\''+k+')">'+k+'</button>';
+      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="switchKelas('"+k+"')">'+k+'</button>';
     }).join("")+
     mapelTabs+'</div>'+
     '<div class="table-wrap"><table><thead><tr>'+
@@ -686,12 +686,12 @@ async function renderGuruASAJ() {
     '<p style="font-size:0.75rem;color:var(--muted);margin-top:3px">Nilai tunggal (hanya Tulis atau hanya Praktek) akan langsung menjadi Nilai ASAJ</p></div>'+
     // Section tabs
     '<div style="display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:2px solid var(--border);padding-bottom:0">'+
-    '<button onclick="setTab(\'rapor\')" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px">📋 Nilai Rapor</button>'+
-    '<button onclick="setTab(\'asaj\')" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid var(--teal);color:var(--teal);margin-bottom:-2px">🎓 Nilai ASAJ</button>'+
+    '<button onclick="setTab(\'rapor\'")" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px">📋 Nilai Rapor</button>'+
+    '<button onclick="setTab(\'asaj\'")" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid var(--teal);color:var(--teal);margin-bottom:-2px">🎓 Nilai ASAJ</button>'+
     '</div>'+
     '<div class="controls"><span class="ctrl-label">Kelas:</span>'+
     Object.keys(SISWA).sort().map(function(k){
-      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="switchKelas(\''+k+')">'+k+'</button>';
+      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="switchKelas('"+k+"')">'+k+'</button>';
     }).join("")+
     '</div>'+
     '<div class="table-wrap"><table><thead><tr>'+
@@ -961,7 +961,7 @@ window.renderAdmin = async function() {
 
     '<div class="controls" style="margin-bottom:1rem"><span class="ctrl-label">Kelas:</span>'+
     Object.keys(SISWA).sort().map(function(k){
-      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="adminKelas(\''+k+')">'+k+'</button>';
+      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="adminKelas(\''+k+'")">'+k+'</button>';
     }).join("")+
     '<button class="export-btn" onclick="exportXLSX()" style="margin-left:8px">Export XLSX ↓</button>'+
     '<button class="tab-btn" onclick="renderAdmin()" style="margin-left:4px">🔄 Refresh</button>'+
@@ -984,7 +984,7 @@ window.renderAdmin = async function() {
     });
     var p = Math.round(filledFields / totalFields * 100);
     var detail = 'NH1: '+filledNH1+' | NH2: '+filledNH2+' | ASTS: '+filledASTS+' | ASAT: '+filledASAT+' dari '+siswaKelas.length+' siswa';
-    html += '<div class="mapel-prog-card" onclick="adminViewMapel(\''+m+')">'+
+    html += '<div class="mapel-prog-card" onclick="adminViewMapel(\''+m+'")">'+
       '<div class="mp-name">'+m+'</div>'+
       '<div class="mp-guru">'+getGuruMapel(currentKelas,m)+'</div>'+
       '<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:'+p+'%"></div></div>'+
@@ -1088,7 +1088,7 @@ window.renderSettings = async function() {
 
     '<div style="display:flex;gap:8px">'+
     '<button class="btn-save" style="flex:1" onclick="simpanSettings()">💾 Simpan Pengaturan</button>'+
-    '<button class="btn-template" style="flex:1" onclick="renderAdmin();document.getElementById(\'bottom-bar\').classList.add(\'hidden\')">← Kembali</button>'+
+    '<button class="btn-template" style="flex:1" onclick="renderAdmin();document.getElementById(\'bottom-bar\').classList.add(\'hidden\'")">← Kembali</button>'+
     '</div></div>'+
 
     '<div style="background:var(--orange-light);border:1px solid #f5c6a0;border-radius:10px;padding:12px 16px;max-width:500px;margin-top:12px;font-size:0.82rem;color:#7d3d0e">'+
@@ -1217,8 +1217,8 @@ window.filterSiswaTable = function() {
   tbody.innerHTML = rows.map(function(r) {
     var encodedKelas = encodeURIComponent(r.kelas);
     var encodedNama = encodeURIComponent(r.nama);
-    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\')">✏️ Edit</button>';
-    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.confirmHapusSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\')">🗑️ Hapus</button>';
+    var editBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;margin-right:6px" onclick="window.editSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\'")">✏️ Edit</button>';
+    var deleteBtn = '<button class="tab-btn" style="padding:4px 12px;font-size:0.75rem;background:var(--danger-light);color:var(--danger);border-color:#f5c6c2" onclick="window.confirmHapusSiswa(\'' + encodedKelas + '\',\'' + encodedNama + '\'")">🗑️ Hapus</button>';
     return '<tr>'+
       '<td style="font-family:\'DM Mono\',monospace;font-size:0.78rem">'+(r.nisn||'-')+'</td>'+
       '<td style="font-weight:500">'+r.nama+'</td>'+
@@ -1944,16 +1944,16 @@ window.renderAkunAdmin = function() {
     html += '<tr>'+
       '<td>'+u.nama+'</td>'+
       '<td style="font-family:\'DM Mono\',monospace;font-size:0.82rem">'+k+'</td>'+
-      '<td><span id="pw-'+k+'" style="font-family:\'DM Mono\',monospace;font-size:0.82rem;filter:blur(4px);cursor:pointer" onclick="togglePwBlur(\''+k+')">'+u.pass+'</span></td>'+
+      '<td><span id="pw-'+k+'" style="font-family:\'DM Mono\',monospace;font-size:0.82rem;filter:blur(4px);cursor:pointer" onclick="togglePwBlur(\''+k+'")">'+u.pass+'</span></td>'+
       (function(){ var k2=k; var mp=[]; Object.keys(SISWA).sort().forEach(function(kls){ var m=getMapelGuru(k2,kls); if(m.length) mp.push(kls+': '+m.join(', ')); }); return '<td style="font-size:0.75rem;line-height:1.6">'+mp.join('<br>')||'—'+'</td>'; })()+
-      '<td><button class="tab-btn" style="font-size:0.75rem;padding:5px 12px" onclick="showEditAkun(\''+k+')">✏️ Edit</button></td>'+
+      '<td><button class="tab-btn" style="font-size:0.75rem;padding:5px 12px" onclick="showEditAkun(\''+k+'")">✏️ Edit</button></td>'+
       '</tr>';
   });
 
   html += '</tbody></table></div>'+
     '<p style="font-size:0.75rem;color:var(--muted);margin-top:10px">💡 Klik pada password untuk menampilkan/menyembunyikan</p>'+
     '<div style="margin-top:1rem">'+
-    '<button class="tab-btn active" onclick="renderAdmin();document.getElementById(\'bottom-bar\').classList.add(\'hidden\')">← Kembali ke Dashboard</button></div>';
+    '<button class="tab-btn active" onclick="renderAdmin();document.getElementById(\'bottom-bar\').classList.add(\'hidden\'")">← Kembali ke Dashboard</button></div>';
 
   document.getElementById("main-content").innerHTML = html;
   document.getElementById("bottom-bar").classList.add("hidden");
@@ -1975,9 +1975,9 @@ window.showEditAkun = function(k) {
     '<input type="text" id="edit-user" value="'+k+'" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;outline:none"></div>'+
     '<div class="form-group"><label>Password Baru</label>'+
     '<div class="pass-wrap"><input type="password" id="edit-pass" value="'+u.pass+'" style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;outline:none">'+
-    '<button type="button" class="toggle-eye" onclick="toggleFieldEye(\'edit-pass\')">👁</button></div></div>'+
+    '<button type="button" class="toggle-eye" onclick="toggleFieldEye(\'edit-pass\'")">👁</button></div></div>'+
     '<div style="display:flex;gap:8px;margin-top:1rem">'+
-    '<button class="btn-save" style="flex:1" onclick="simpanEditAkun(\''+k+')">Simpan</button>'+
+    '<button class="btn-save" style="flex:1" onclick="simpanEditAkun(\''+k+'")">Simpan</button>'+
     '<button class="btn-template" style="flex:1" onclick="closeModal()">Batal</button>'+
     '</div></div>';
   modal.classList.remove("hidden"); modal.style.display = "flex";
@@ -2017,12 +2017,12 @@ window.showUbahAkunGuru = function() {
     '<input type="text" id="edit-user" value="'+k+'" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;outline:none"></div>'+
     '<div class="form-group"><label>Password Lama</label>'+
     '<div class="pass-wrap"><input type="password" id="edit-pass-old" placeholder="Masukkan password lama" style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;outline:none">'+
-    '<button type="button" class="toggle-eye" onclick="toggleFieldEye(\'edit-pass-old\')">👁</button></div></div>'+
+    '<button type="button" class="toggle-eye" onclick="toggleFieldEye(\'edit-pass-old\'")">👁</button></div></div>'+
     '<div class="form-group"><label>Password Baru</label>'+
     '<div class="pass-wrap"><input type="password" id="edit-pass-new" placeholder="Masukkan password baru" style="width:100%;padding:10px 44px 10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:\'DM Sans\',sans-serif;font-size:0.95rem;outline:none">'+
-    '<button type="button" class="toggle-eye" onclick="toggleFieldEye(\'edit-pass-new\')">👁</button></div></div>'+
+    '<button type="button" class="toggle-eye" onclick="toggleFieldEye(\'edit-pass-new\'")">👁</button></div></div>'+
     '<div style="display:flex;gap:8px;margin-top:1rem">'+
-    '<button class="btn-save" style="flex:1" onclick="simpanAkunGuru(\''+k+')">Simpan</button>'+
+    '<button class="btn-save" style="flex:1" onclick="simpanAkunGuru(\''+k+'")">Simpan</button>'+
     '<button class="btn-template" style="flex:1" onclick="closeModal()">Batal</button>'+
     '</div></div>';
   modal.classList.remove("hidden"); modal.style.display = "flex";

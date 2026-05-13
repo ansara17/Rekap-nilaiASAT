@@ -626,12 +626,12 @@ async function renderGuru() {
     '<p style="font-size:0.75rem;color:var(--teal);margin-top:3px">'+pctInfo+'</p></div>'+
     // Section tabs
     '<div style="display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:2px solid var(--border);padding-bottom:0">'+
-    '<button onclick="setTab(\'rapor\'")" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid var(--teal);color:var(--teal);margin-bottom:-2px">📋 Nilai Rapor</button>'+
-    '<button onclick="setTab(\'asaj\'")" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px">🎓 Nilai ASAJ</button>'+
+    '<button onclick=\'setTab("rapor")\' style="padding:8px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid var(--teal);color:var(--teal);margin-bottom:-2px">📋 Nilai Rapor</button>'+
+    '<button onclick=\'setTab("asaj")\' style="padding:8px 20px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px">🎓 Nilai ASAJ</button>'+
     '</div>'+
     '<div class="controls"><span class="ctrl-label">Kelas:</span>'+
     Object.keys(SISWA).sort().map(function(k){
-      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="switchKelas('"+k+"')">'+k+'</button>';
+      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="switchKelas(\'"+k+"\')">'+k+'</button>';
     }).join("")+
     mapelTabs+'</div>'+
     '<div class="table-wrap"><table><thead><tr>'+
@@ -686,12 +686,12 @@ async function renderGuruASAJ() {
     '<p style="font-size:0.75rem;color:var(--muted);margin-top:3px">Nilai tunggal (hanya Tulis atau hanya Praktek) akan langsung menjadi Nilai ASAJ</p></div>'+
     // Section tabs
     '<div style="display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:2px solid var(--border);padding-bottom:0">'+
-    '<button onclick="setTab(\'rapor\'")" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px">📋 Nilai Rapor</button>'+
-    '<button onclick="setTab(\'asaj\'")" style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid var(--teal);color:var(--teal);margin-bottom:-2px">🎓 Nilai ASAJ</button>'+
+    '<button onclick=\'setTab("rapor")\' style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px">📋 Nilai Rapor</button>'+
+    '<button onclick=\'setTab("asaj")\' style="padding:8px 20px;border:none;background:none;font-family:\'DM Sans\',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;border-bottom:3px solid var(--teal);color:var(--teal);margin-bottom:-2px">🎓 Nilai ASAJ</button>'+
     '</div>'+
     '<div class="controls"><span class="ctrl-label">Kelas:</span>'+
     Object.keys(SISWA).sort().map(function(k){
-      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="switchKelas('"+k+"')">'+k+'</button>';
+      return '<button class="tab-btn'+(currentKelas===k?" active":"")+'" onclick="switchKelas(\'"+k+"\')">'+k+'</button>';
     }).join("")+
     '</div>'+
     '<div class="table-wrap"><table><thead><tr>'+
